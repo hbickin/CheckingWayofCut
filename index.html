@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gerber Tech Cut File Reader — BIÇKIN</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' aria-hidden='true'%3E %3Cdefs%3E %3ClinearGradient id='bkGrad' x1='0' y1='0' x2='1' y2='1'%3E %3Cstop offset='0' stop-color='#fdba74'/%3E%3Cstop offset='.55' stop-color='#f97316'/%3E%3Cstop offset='1' stop-color='#c2410c'/%3E %3C/linearGradient%3E %3CclipPath id='bkClip'%3E%3Ccircle cx='32' cy='32' r='30'/%3E%3C/clipPath%3E %3C/defs%3E %3Ccircle cx='32' cy='32' r='31' fill='url%28#bkGrad%29'/%3E %3Cg clip-path='url%28#bkClip%29' stroke='#1c1917' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'%3E %3Cpath d='M4 66 Q6 49 20 45 L27 44 L32 58 L37 44 L44 45 Q58 49 60 66 Z' fill='#475569'/%3E %3Cpath d='M44 45 Q55 47 59 58 L52 56 Z' fill='#334155'/%3E %3Cpath d='M27 44 L32 58 L37 44 Z' fill='#f8fafc'/%3E %3Cpath d='M14 58 Q32 54 50 58 L50 66 L14 66 Z' fill='#dc2626'/%3E %3Cpath d='M36 57 L44 53' stroke-width='2.6' stroke='#a16207'/%3E %3Cpath d='M27 38 L27 45 L37 45 L37 38 Z' fill='#e0a77c'/%3E %3Cellipse cx='20.5' cy='30' rx='2.4' ry='3.4' fill='#e0a77c'/%3E %3Cellipse cx='43.5' cy='30' rx='2.4' ry='3.4' fill='#e0a77c'/%3E %3Cpath d='M21 24 Q21 15 32 15 Q43 15 43 24 L43 33 Q43 44 32 45 Q21 44 21 33 Z' fill='#eab38a'/%3E %3Cpath d='M21 31 Q21 47 32 48 Q43 47 43 31 Q41 39 32 39 Q23 39 21 31 Z' fill='#3f2a1d'/%3E %3Cpath d='M24 24.5 L30.5 26.5' stroke-width='2.8'/%3E %3Cpath d='M40 24.5 L33.5 26.5' stroke-width='2.8'/%3E %3Ccircle cx='27.5' cy='28.6' r='1.1' fill='#1c1917' stroke='none'/%3E %3Ccircle cx='36.5' cy='28.6' r='1.1' fill='#1c1917' stroke='none'/%3E %3Cpath d='M31 28 Q29 33 30 34 Q32 35.5 34 34 Q35 33 33 28' fill='#d9946a' stroke-width='1.2'/%3E %3Cpath d='M32 35.5 C27 33 21 34 18.5 37.5 C17 39.5 13.5 38.5 14.5 34.5 C15.5 32 18 33 17.5 35' fill='none' stroke='#1c1917' stroke-width='3.2'/%3E %3Cpath d='M32 35.5 C37 33 43 34 45.5 37.5 C47 39.5 50.5 38.5 49.5 34.5 C48.5 32 46 33 46.5 35' fill='none' stroke='#1c1917' stroke-width='3.2'/%3E %3Cg transform='rotate%288 32 14%29'%3E %3Cpath d='M21.5 19 L24 5 L40 5 L42.5 19 Q32 21.5 21.5 19 Z' fill='#b91c1c'/%3E %3Cpath d='M22.3 15 Q32 17.5 41.8 15' fill='none' stroke='#7f1d1d' stroke-width='1.4'/%3E %3Cpath d='M32 5 Q40 4 44 9 Q46 12 45 16' fill='none' stroke-width='1.8'/%3E %3Cpath d='M45 15 L43.5 20 M45 15 L45.5 20.5 M45 15 L47 19.5' stroke-width='1.3'/%3E %3C/g%3E %3C/g%3E %3Ccircle cx='32' cy='32' r='31' fill='none' stroke='#7c2d12' stroke-width='1.5'/%3E %3C/svg%3E">
+<style>
+  :root {
+    --bg: #1d2128;
+    --panel: #262b33;
+    --panel-2: #2f353f;
+    --border: #3a414d;
+    --text: #e6e9ee;
+    --muted: #9aa3b2;
+    --accent: #3b82f6;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --fabric: #f7f3ea;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; flex-direction: column; height: 100vh;
+    background: var(--bg); color: var(--text);
+    font: 13px/1.4 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  /* --- Üst araç çubuğu --- */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  /* --- Logo --- */
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px; margin-right: 6px; padding-right: 14px;
+    border-right: 1px solid var(--border); user-select: none; text-decoration: none;
+  }
+  .brand svg { width: 40px; height: 40px; filter: drop-shadow(0 2px 4px rgba(249,115,22,.35)); }
+  .brand span {
+    font: 800 21px/1 "Segoe UI", system-ui, sans-serif; letter-spacing: .14em;
+    background: linear-gradient(180deg, #fdba74 0%, #f97316 55%, #c2410c 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 1px 8px rgba(249,115,22,.25);
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--panel-2); color: var(--text); font: inherit;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn input[type=file] { display: none; }
+  .field { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .field input[type=number] {
+    width: 90px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  .field select {
+    max-width: 320px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  .field select:disabled, .field input:disabled { opacity: .5; }
+  .sep { width: 1px; align-self: stretch; background: var(--border); margin: 0 4px; }
+  #fileName { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch; }
+
+  /* --- Bölüm başlıkları --- */
+  .bar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 4px 12px; background: var(--panel); border-bottom: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; min-height: 28px;
+  }
+  .bar b { color: var(--text); font-weight: 600; }
+  .bar .title { color: var(--text); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .bar .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  /* --- Önizleme (tam resim) --- */
+  #previewWrap { height: 200px; flex: 0 0 200px; position: relative; border-bottom: 1px solid var(--border); }
+  /* --- Simülasyon --- */
+  #simWrap { flex: 1 1 auto; position: relative; min-height: 120px; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #preview { cursor: crosshair; }
+  #sim { cursor: grab; }
+  #sim.dragging { cursor: grabbing; }
+
+  .progress { width: 160px; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+  .progress > div { height: 100%; width: 0; background: var(--ok); }
+  .legend { display: inline-flex; gap: 10px; align-items: center; }
+  .legend i { font-style: normal; font-weight: 700; }
+  .knife-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); vertical-align: middle; margin-right: 4px; }
+
+  /* --- Footer: işlem günlüğü --- */
+  footer { flex: 0 0 130px; min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--panel); border-top: 1px solid var(--border); }
+  #log { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px; font: 12px/1.5 Consolas, "Courier New", monospace; }
+  #log .row { white-space: pre-wrap; }
+  #log .t { color: var(--muted); margin-right: 8px; }
+  #log .info { color: var(--text); }
+  #log .ok { color: var(--ok); }
+  #log .warn { color: var(--warn); }
+  #log .error { color: var(--err); font-weight: 600; }
+  .linkbtn { background: none; border: none; color: var(--muted); cursor: pointer; font: inherit; padding: 0; }
+  .linkbtn:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="brand" title="BIÇKIN — Kesim Simülatörü">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="bkGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fdba74"/><stop offset=".55" stop-color="#f97316"/><stop offset="1" stop-color="#c2410c"/>
+        </linearGradient>
+        <clipPath id="bkClip"><circle cx="32" cy="32" r="30"/></clipPath>
+      </defs>
+      <circle cx="32" cy="32" r="31" fill="url(#bkGrad)"/>
+      <g clip-path="url(#bkClip)" stroke="#1c1917" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+        <!-- Omuza atılmış ceket -->
+        <path d="M4 66 Q6 49 20 45 L27 44 L32 58 L37 44 L44 45 Q58 49 60 66 Z" fill="#475569"/>
+        <path d="M44 45 Q55 47 59 58 L52 56 Z" fill="#334155"/>
+        <!-- Gömlek -->
+        <path d="M27 44 L32 58 L37 44 Z" fill="#f8fafc"/>
+        <!-- Kırmızı kuşak ve bıçak sapı -->
+        <path d="M14 58 Q32 54 50 58 L50 66 L14 66 Z" fill="#dc2626"/>
+        <path d="M36 57 L44 53" stroke-width="2.6" stroke="#a16207"/>
+        <!-- Boyun ve kulaklar -->
+        <path d="M27 38 L27 45 L37 45 L37 38 Z" fill="#e0a77c"/>
+        <ellipse cx="20.5" cy="30" rx="2.4" ry="3.4" fill="#e0a77c"/>
+        <ellipse cx="43.5" cy="30" rx="2.4" ry="3.4" fill="#e0a77c"/>
+        <!-- Kafa -->
+        <path d="M21 24 Q21 15 32 15 Q43 15 43 24 L43 33 Q43 44 32 45 Q21 44 21 33 Z" fill="#eab38a"/>
+        <!-- Sakal -->
+        <path d="M21 31 Q21 47 32 48 Q43 47 43 31 Q41 39 32 39 Q23 39 21 31 Z" fill="#3f2a1d"/>
+        <!-- Çatık kaşlar ve gözler -->
+        <path d="M24 24.5 L30.5 26.5" stroke-width="2.8"/>
+        <path d="M40 24.5 L33.5 26.5" stroke-width="2.8"/>
+        <circle cx="27.5" cy="28.6" r="1.1" fill="#1c1917" stroke="none"/>
+        <circle cx="36.5" cy="28.6" r="1.1" fill="#1c1917" stroke="none"/>
+        <!-- Kalın burun -->
+        <path d="M31 28 Q29 33 30 34 Q32 35.5 34 34 Q35 33 33 28" fill="#d9946a" stroke-width="1.2"/>
+        <!-- Burma bıyık -->
+        <path d="M32 35.5 C27 33 21 34 18.5 37.5 C17 39.5 13.5 38.5 14.5 34.5 C15.5 32 18 33 17.5 35"
+              fill="none" stroke="#1c1917" stroke-width="3.2"/>
+        <path d="M32 35.5 C37 33 43 34 45.5 37.5 C47 39.5 50.5 38.5 49.5 34.5 C48.5 32 46 33 46.5 35"
+              fill="none" stroke="#1c1917" stroke-width="3.2"/>
+        <!-- Fes (hafif yana yatık) ve püskül -->
+        <g transform="rotate(8 32 14)">
+          <path d="M21.5 19 L24 5 L40 5 L42.5 19 Q32 21.5 21.5 19 Z" fill="#b91c1c"/>
+          <path d="M22.3 15 Q32 17.5 41.8 15" fill="none" stroke="#7f1d1d" stroke-width="1.4"/>
+          <path d="M32 5 Q40 4 44 9 Q46 12 45 16" fill="none" stroke-width="1.8"/>
+          <path d="M45 15 L43.5 20 M45 15 L45.5 20.5 M45 15 L47 19.5" stroke-width="1.3"/>
+        </g>
+      </g>
+      <circle cx="32" cy="32" r="31" fill="none" stroke="#7c2d12" stroke-width="1.5"/>
+    </svg>
+    <span>BIÇKIN</span>
+  </div>
+  <label class="btn primary" title="Gerber / RS-274X kesim dosyası (.CUT) seç">
+    📂 Dosya Seç
+    <input type="file" id="fileInput" accept=".cut,.CUT,.txt,.plt,*/*">
+  </label>
+  <label class="field" title="Simülasyonun başlayacağı parça">
+    Başlangıç
+    <select id="startPiece" disabled><option value="">Tümü (baştan)</option></select>
+  </label>
+  <label class="field" title="İşaretliyse yalnızca seçilen parça kesilir; değilse seçilen parçadan pastal sonuna kadar devam edilir">
+    <input type="checkbox" id="onlyPiece" disabled> Sadece bu parça
+  </label>
+  <button class="btn" id="btnSim" disabled>▶ Simüle Et</button>
+  <label class="field" title="Bıçağın kesim hızı (mm/sn). Bıçak kalkıkken boş hareket bunun 2 katı hızla yapılır.">
+    Hız (mm/sn)
+    <input type="number" id="speed" min="1" max="1000000" step="1" value="500">
+  </label>
+  <button class="btn" id="btnPause" disabled>⏸ Duraklat</button>
+  <button class="btn" id="btnStop" disabled>⏹ Durdur</button>
+  <button class="btn" id="btnReset" title="Dosyayı, ayarları, simülasyonu ve günlüğü tamamen sıfırlar">⟲ Reset</button>
+  <span class="sep"></span>
+  <span id="fileName">Dosya seçilmedi</span>
+</header>
+
+<div class="bar">
+  <span class="title">Pastal</span>
+  <span id="markerInfo">—</span>
+</div>
+<div id="previewWrap"><canvas id="preview"></canvas></div>
+
+<div class="bar">
+  <span class="title">Simülasyon</span>
+  <span><span class="knife-dot" id="knifeDot"></span><b id="knifeState">Bıçak: —</b></span>
+  <span>Konum: <b id="pos">—</b></span>
+  <span>Parça: <b id="pieceInfo">—</b></span>
+  <span>Süre: <b id="timeInfo">—</b></span>
+  <span class="progress"><div id="progressBar"></div></span>
+  <b id="progressPct">0%</b>
+  <span class="right">
+    <span class="legend" title="Bıçağın parça konturundaki kesim yönü">
+      <span><i style="color:#15803d">&gt;</i> saat yönü</span>
+      <span><i style="color:#9333ea">&lt;</i> saat yönü tersi</span>
+      <span><i style="color:#000;background:#f7f3ea;padding:0 3px;border-radius:2px">●</i> başlangıç</span>
+    </span>
+    <label class="field"><input type="checkbox" id="showDir" checked> Yön ikonları</label>
+    <label class="field"><input type="checkbox" id="follow" checked> Bıçağı takip et</label>
+    <button class="btn" id="btnFit" disabled>⤢ Sığdır</button>
+  </span>
+</div>
+<div id="simWrap"><canvas id="sim"></canvas></div>
+
+<footer>
+  <div class="bar">
+    <span class="title">İşlemler</span>
+    <span id="logCounts"></span>
+    <span class="right"><button class="linkbtn" id="btnClearLog">Temizle</button></span>
+  </div>
+  <div id="log"></div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // Gerber kesim dosyalarında koordinat birimi 0,01 inç = 0,254 mm
+  var DEFAULT_UNIT_MM = 0.254;
+  // Bıçak kalkıkken boş hareket, kesim hızının bu katı ile yapılır
+  var MOVE_SPEED_FACTOR = 2;
+
+  var COLORS = {
+    fabric: '#f7f3ea', fabricEdge: '#b9b2a2', grid: 'rgba(0,0,0,.06)',
+    pieceFill: 'rgba(255,210,130,.35)', ghost: '#a9a6a0',
+    cut: '#1f6feb', notch: '#e8590c', move: 'rgba(34,197,94,.9)',
+    current: 'rgba(59,130,246,.22)', label: '#3d3a33',
+    knifeDown: '#ef4444', knifeUp: '#22c55e', viewport: '#ef4444',
+    dirCw: '#15803d', dirCcw: '#9333ea', start: '#000000'
+  };
+  // Yön ikonları için kontur üzerinde aday nokta aralığı (mm)
+  var ARROW_STEP_MM = 20;
+  // Ekranda iki yön ikonu arasındaki en küçük mesafe (px)
+  var ARROW_GAP_PX = 70;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {
+    file: $('fileInput'), fileName: $('fileName'), speed: $('speed'),
+    btnSim: $('btnSim'), btnPause: $('btnPause'), btnStop: $('btnStop'), btnFit: $('btnFit'),
+    btnReset: $('btnReset'), startPiece: $('startPiece'), onlyPiece: $('onlyPiece'),
+    follow: $('follow'), showDir: $('showDir'), markerInfo: $('markerInfo'),
+    preview: $('preview'), sim: $('sim'),
+    knifeDot: $('knifeDot'), knifeState: $('knifeState'), pos: $('pos'),
+    pieceInfo: $('pieceInfo'), timeInfo: $('timeInfo'),
+    progressBar: $('progressBar'), progressPct: $('progressPct'),
+    log: $('log'), logCounts: $('logCounts'), btnClearLog: $('btnClearLog')
+  };
+
+  // ------------------------------------------------------------------
+  // Günlük (footer)
+  // ------------------------------------------------------------------
+  var logCount = { warn: 0, error: 0 };
+  function log(level, msg) {
+    var row = document.createElement('div');
+    row.className = 'row ' + level;
+    var t = document.createElement('span');
+    t.className = 't';
+    t.textContent = new Date().toLocaleTimeString('tr-TR');
+    var icon = { info: 'ℹ', ok: '✔', warn: '⚠', error: '✖' }[level] || '';
+    row.appendChild(t);
+    row.appendChild(document.createTextNode(icon + ' ' + msg));
+    els.log.appendChild(row);
+    els.log.scrollTop = els.log.scrollHeight;
+    if (level === 'warn' || level === 'error') { logCount[level]++; updateLogCounts(); }
+  }
+  function updateLogCounts() {
+    var parts = [];
+    if (logCount.error) parts.push(logCount.error + ' hata');
+    if (logCount.warn) parts.push(logCount.warn + ' uyarı');
+    els.logCounts.textContent = parts.join(', ');
+  }
+  els.btnClearLog.addEventListener('click', function () {
+    els.log.innerHTML = ''; logCount = { warn: 0, error: 0 }; updateLogCounts();
+  });
+  window.addEventListener('error', function (e) { log('error', 'Beklenmeyen hata: ' + e.message); });
+
+  // ------------------------------------------------------------------
+  // Ayrıştırıcı
+  // ------------------------------------------------------------------
+  // Bilinen ama çizime etkisi olmayan M kodları
+  var M_INFO = {
+    26: 'parça başlangıcı', 70: 'başlık', 80: 'çentik başlangıcı', 81: 'çentik sonu',
+    82: 'köşe/aşırı kesim', 83: 'keskin köşe', 84: 'eğri noktası', 85: 'parça kontur başlangıcı'
+  };
+
+  function parseCut(text) {
+    var res = {
+      segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
+      unitMm: DEFAULT_UNIT_MM, feed: null, warnings: [], errors: [], ended: false
+    };
+    var warnOnce = {};
+    function warn(key, msg) {
+      if (warnOnce[key]) { warnOnce[key].n++; return; }
+      warnOnce[key] = { n: 1, msg: msg };
+    }
+
+    text = text.replace(/^﻿/, '');
+    if (!text.trim()) { res.errors.push('Dosya boş.'); return res; }
+    if (/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 2000))) {
+      res.errors.push('Dosya metin tabanlı bir kesim dosyası değil (ikili veri içeriyor).');
+      return res;
+    }
+
+    // Geometri akışı "M0*" ile biter, ardından virgüllü bilgi satırları gelir
+    var geom, trailer = '';
+    var end = /\*M0+\*/.exec(text);
+    if (end) {
+      geom = text.slice(0, end.index + end[0].length);
+      trailer = text.slice(end.index + end[0].length);
+    } else {
+      var tm = /^[A-Z],/m.exec(text);
+      geom = tm ? text.slice(0, tm.index) : text;
+      trailer = tm ? text.slice(tm.index) : '';
+      res.warnings.push('M0 (program sonu) komutu bulunamadı; dosya eksik olabilir.');
+    }
+
+    var tokens = geom.replace(/[\r\n]+/g, '').split('*');
+    var x = 0, y = 0, down = false, piece = 0, notchNext = false, expectMessage = false;
+    var first = true;
+    var tokRe = /([A-Z])(-?\d+(?:\.\d+)?)?/y;
+
+    for (var i = 0; i < tokens.length; i++) {
+      var tok = tokens[i].trim();
+      if (!tok) continue;
+      if (expectMessage) { res.message = tok; expectMessage = false; continue; }
+
+      var fields = [], pos = 0, ok = true;
+      tokRe.lastIndex = 0;
+      while (pos < tok.length) {
+        tokRe.lastIndex = pos;
+        var m = tokRe.exec(tok);
+        if (!m) { ok = false; break; }
+        fields.push({ c: m[1], v: m[2] === undefined ? null : Number(m[2]) });
+        pos = tokRe.lastIndex;
+      }
+      if (!ok || !fields.length) {
+        warn('tok:' + tok.slice(0, 12), 'Tanınmayan komut "' + tok.slice(0, 30) + '" (#' + i + ') atlandı.');
+        continue;
+      }
+
+      if (first) {
+        first = false;
+        if (fields[0].c !== 'H') res.warnings.push('Dosya H (başlık) komutu ile başlamıyor.');
+      }
+
+      var nx = null, ny = null, isFeed = false;
+      for (var f = 0; f < fields.length; f++) {
+        var c = fields[f].c, v = fields[f].v;
+        switch (c) {
+          case 'X': nx = v; break;
+          case 'Y': ny = v; break;
+          case 'Q': isFeed = true; break;
+          case 'H': break;
+          case 'D': break;
+          case 'N':
+            piece = v;
+            if (!res.pieces[piece]) {
+              res.pieces[piece] = { id: piece, minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, attrs: {}, cutLen: 0, firstSeg: -1, lastSeg: -1 };
+              res.pieceOrder.push(piece);
+            } else {
+              warn('dupN' + piece, 'Parça N' + piece + ' birden fazla tanımlanmış.');
+            }
+            break;
+          case 'M':
+            if (v === 0) { res.ended = true; }
+            else if (v === 14) down = true;
+            else if (v === 15) down = false;
+            else if (v === 19) notchNext = true;
+            else if (v === 20) expectMessage = true;
+            else if (!M_INFO[v]) warn('M' + v, 'Bilinmeyen M' + v + ' kodu yok sayıldı.');
+            break;
+          default:
+            warn('c' + c, 'Bilinmeyen "' + c + '" komutu yok sayıldı.');
+        }
+      }
+
+      if (nx === null && ny === null) continue;
+      if (nx === null) nx = x;
+      if (ny === null) ny = y;
+      if (!isFinite(nx) || !isFinite(ny)) { warn('nan', 'Geçersiz koordinat değeri atlandı.'); continue; }
+      if (isFeed) { res.feed = { x: nx, y: ny }; continue; }
+
+      var len = Math.hypot(nx - x, ny - y);
+      if (len > 0) {
+        var type = down ? (notchNext ? 'notch' : 'cut') : 'move';
+        res.segments.push({ x0: x, y0: y, x1: nx, y1: ny, len: len, type: type, piece: piece });
+        var p = res.pieces[piece];
+        if (p && type !== 'move') {
+          p.minX = Math.min(p.minX, x, nx); p.maxX = Math.max(p.maxX, x, nx);
+          p.minY = Math.min(p.minY, y, ny); p.maxY = Math.max(p.maxY, y, ny);
+          if (type === 'cut') p.cutLen += len;
+          if (p.firstSeg < 0) p.firstSeg = res.segments.length - 1;
+          p.lastSeg = res.segments.length - 1;
+        }
+        if (down && !piece) warn('nopiece', 'Parça numarası (N) olmadan kesim yapılıyor.');
+      }
+      if (nx < 0 || ny < 0) warn('neg', 'Negatif koordinat bulundu (kumaş dışı).');
+      x = nx; y = ny; notchNext = false;
+    }
+    if (expectMessage) res.warnings.push('M20 mesajı yarım kalmış.');
+    if (down) res.warnings.push('Program bitiminde bıçak hâlâ aşağıda (M15 eksik).');
+
+    parseTrailer(trailer, res);
+
+    // Birim kontrolü: M20 mesajındaki "L=..CM" ile B (sınır) satırını karşılaştır
+    var lm = /L=([\d.]+)\s*CM/i.exec(res.message);
+    var bx = res.bounds ? res.bounds.w : (res.feed ? res.feed.x : 0);
+    if (lm && bx > 0) {
+      var unit = parseFloat(lm[1]) * 10 / bx;
+      if (Math.abs(unit - DEFAULT_UNIT_MM) / DEFAULT_UNIT_MM > 0.02) {
+        res.unitMm = unit;
+        res.warnings.push('Koordinat birimi beklenen 0,254 mm değil; pastal boyundan ' + unit.toFixed(4) + ' mm hesaplandı.');
+      }
+    }
+
+    // Sınır bilgisi yoksa geometriden hesapla
+    var gx = 0, gy = 0;
+    res.segments.forEach(function (s) { gx = Math.max(gx, s.x0, s.x1); gy = Math.max(gy, s.y0, s.y1); });
+    if (!res.bounds) {
+      res.bounds = { w: Math.max(gx, res.feed ? res.feed.x : 0), h: gy };
+      res.warnings.push('B (pastal sınırı) satırı yok; sınırlar geometriden hesaplandı.');
+    } else if (gx > res.bounds.w * 1.001 || gy > res.bounds.h * 1.001) {
+      res.warnings.push('Bazı kesimler pastal sınırının (B) dışına taşıyor.');
+    }
+
+    Object.keys(warnOnce).forEach(function (k) {
+      var w = warnOnce[k];
+      res.warnings.push(w.msg + (w.n > 1 ? ' (' + w.n + ' kez)' : ''));
+    });
+    if (!res.segments.some(function (s) { return s.type !== 'move'; })) {
+      res.errors.push('Dosyada kesim hareketi (M14 ile bıçak aşağıda X/Y) bulunamadı.');
+    }
+    return res;
+  }
+
+  function parseTrailer(trailer, res) {
+    var vNames = {}, cur = null;
+    trailer.split(/\r?\n/).forEach(function (line) {
+      line = line.trim().replace(/\*$/, '');
+      if (!line) return;
+      var p = line.split(',');
+      switch (p[0]) {
+        case 'B':
+          var w = Number(p[1]), h = Number(p[2]);
+          if (w > 0 && h > 0) res.bounds = { w: w, h: h };
+          else res.warnings.push('Geçersiz B (sınır) satırı: ' + line);
+          break;
+        case 'M': if (p[1]) res.info[p[1]] = p[2] || ''; break;
+        case 'V': vNames[p[2]] = p[1]; break;
+        case 'L':
+          var n = Number(p[1]);
+          cur = res.pieces[n] || null;
+          if (n && !cur) res.warnings.push('Etiket L,' + n + ' için geometride N' + n + ' parçası yok.');
+          break;
+        case 'P': if (cur) cur.labelPos = { x: Number(p[1]), y: Number(p[2]) }; break;
+        case 'D':
+          if (!cur) break;
+          if (p.length >= 6 && p[3] !== '' && !isNaN(p[3])) cur.color = [Number(p[3]), Number(p[4]), Number(p[5])];
+          cur.attrs[vNames[p[1]] || ('D' + p[1])] = p[2];
+          break;
+      }
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // Durum
+  // ------------------------------------------------------------------
+  var data = null;
+  var paths = null;          // statik Path2D'ler
+  var done = null;           // tamamlanan hareketlerin Path2D'leri
+  // start/end: simüle edilecek hareket aralığı [start, end)
+  function newSim() {
+    return { idx: 0, pos: 0, t: 0, start: 0, end: 0, started: false, running: false, finished: false, lastTs: 0 };
+  }
+  var sim = newSim();
+  var cam = { x: 0, y: 0, s: 1 };
+  var previewView = { s: 1, ox: 0, oy: 0 };
+  var previewCache = null;
+  var totalTime = 0;
+
+  function speedMm() {
+    return Number(els.speed.value);
+  }
+  function validSpeed() {
+    var raw = els.speed.value.trim();
+    var v = Number(raw);
+    if (raw === '' || !Number.isInteger(v) || v < 1 || v > 1000000) {
+      log('error', 'Geçersiz hız "' + raw + '": 1 ile 1.000.000 arasında tam sayı (mm/sn) girin.');
+      return false;
+    }
+    return true;
+  }
+
+  function segTime(seg, from) {
+    var mm = (seg.len - (from || 0)) * data.unitMm;
+    return mm / (speedMm() * (seg.type === 'move' ? MOVE_SPEED_FACTOR : 1));
+  }
+  function computeTotalTime() {
+    totalTime = 0;
+    if (!data) return;
+    var r = simRange();
+    for (var i = r.start; i < r.end; i++) totalTime += segTime(data.segments[i]);
+  }
+
+  function fmtTime(sec) {
+    if (!isFinite(sec)) return '—';
+    sec = Math.max(0, Math.round(sec));
+    var h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60;
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    return (h ? h + ':' + pad(m) : m) + ':' + pad(s);
+  }
+  function fmtLen(units) {
+    var cm = units * data.unitMm / 10;
+    return cm >= 100 ? (cm / 100).toFixed(2).replace('.', ',') + ' m' : cm.toFixed(1).replace('.', ',') + ' cm';
+  }
+
+  // ------------------------------------------------------------------
+  // Dosya okuma
+  // ------------------------------------------------------------------
+  els.file.addEventListener('change', function () {
+    var file = els.file.files && els.file.files[0];
+    if (!file) return;
+    stopSim(true);
+    els.fileName.textContent = file.name;
+    log('info', '"' + file.name + '" okunuyor (' + (file.size / 1024).toFixed(1) + ' KB)...');
+    if (file.size > 50 * 1024 * 1024) {
+      log('error', 'Dosya çok büyük (50 MB üzeri); yükleme iptal edildi.');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onerror = function () { log('error', 'Dosya okunamadı: ' + (reader.error ? reader.error.message : 'bilinmeyen hata')); };
+    reader.onload = function () {
+      var t0 = performance.now();
+      var res;
+      try { res = parseCut(String(reader.result)); }
+      catch (e) { log('error', 'Ayrıştırma hatası: ' + e.message); return; }
+      res.warnings.forEach(function (w) { log('warn', w); });
+      if (res.errors.length) {
+        res.errors.forEach(function (e) { log('error', e); });
+        log('error', 'Dosya yüklenemedi.');
+        setData(null);
+        return;
+      }
+      setData(res);
+      var cutCount = 0, cutLen = 0, moveLen = 0, notches = 0;
+      res.segments.forEach(function (s) {
+        if (s.type === 'move') moveLen += s.len;
+        else { cutLen += s.len; cutCount++; if (s.type === 'notch') notches++; }
+      });
+      log('ok', 'Dosya yüklendi (' + Math.round(performance.now() - t0) + ' ms): ' +
+        res.pieceOrder.length + ' parça, ' + res.segments.length + ' hareket, ' + notches + ' çentik.');
+      log('info', 'Kesim yolu ' + fmtLen(cutLen) + ', boş hareket ' + fmtLen(moveLen) +
+        '. Tahmini süre ' + fmtTime(totalTime) + ' (' + speedMm() + ' mm/sn).');
+      if (res.message) log('info', 'Mesaj: ' + res.message);
+      var cw = 0, ccw = 0;
+      res.pieceOrder.forEach(function (id) { var d = res.pieces[id].dir; if (d === 'cw') cw++; else if (d === 'ccw') ccw++; });
+      log('info', 'Kesim yönü: ' + cw + ' parça saat yönünde (>), ' + ccw + ' parça saat yönü tersinde (<).');
+    };
+    reader.readAsText(file);
+    els.file.value = '';
+  });
+
+  function setData(res) {
+    data = res;
+    sim = newSim();
+    paths = null; done = null; previewCache = null;
+    if (data) {
+      buildPaths();
+      fillPieceSelect();
+      els.onlyPiece.checked = false;
+      prepareSim();
+      fitView();
+      var i = data.info, b = data.bounds;
+      var bits = [];
+      if (i['Marker Name']) bits.push('<b>' + esc(i['Marker Name']) + '</b>');
+      bits.push('Boy: <b>' + fmtLen(b.w) + '</b>');
+      bits.push('En: <b>' + fmtLen(b.h) + '</b>');
+      bits.push('Parça: <b>' + data.pieceOrder.length + '</b>');
+      if (i['MARKER UTILTIZATION'] || i['MARKER UTILIZATION']) bits.push('Verim: <b>%' + esc(i['MARKER UTILTIZATION'] || i['MARKER UTILIZATION']) + '</b>');
+      if (i['CUT GEN DATE']) bits.push('Tarih: <b>' + esc(i['CUT GEN DATE']) + '</b>');
+      els.markerInfo.innerHTML = bits.join(' &nbsp;·&nbsp; ');
+    } else {
+      els.markerInfo.textContent = '—';
+      fillPieceSelect();
+    }
+    updateButtons();
+    updateStatus();
+    renderPreview(true);
+    renderSim();
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+
+  function buildPaths() {
+    paths = { ghost: new Path2D(), notch: new Path2D(), fills: {} };
+    var lastPiece = null, poly = null;
+    data.segments.forEach(function (s) {
+      if (s.type === 'move') return;
+      var target = s.type === 'notch' ? paths.notch : paths.ghost;
+      target.moveTo(s.x0, s.y0); target.lineTo(s.x1, s.y1);
+      // Parça dolgusu: çentik uçlarını atlayıp kontur noktalarını tek çokgende birleştir
+      if (s.type === 'notch') return;
+      if (s.piece !== lastPiece) { poly = paths.fills[s.piece] = new Path2D(); lastPiece = s.piece; poly.moveTo(s.x0, s.y0); }
+      poly.lineTo(s.x1, s.y1);
+    });
+    buildDirections();
+  }
+
+  // Her parça için kesim yönü (saat yönü / tersi), başlangıç noktası ve
+  // kontur boyunca eşit aralıklı yön ikonu adayları
+  function buildDirections() {
+    var step = ARROW_STEP_MM / data.unitMm;
+    var acc = {};
+    data.segments.forEach(function (s) {
+      if (s.type !== 'cut') return;
+      var p = data.pieces[s.piece];
+      if (!p) return;
+      var a = acc[s.piece];
+      if (!a) {
+        a = acc[s.piece] = { area: 0, next: step / 2, dist: 0 };
+        p.start = { x: s.x0, y: s.y0 };
+        p.arrows = [];
+      }
+      a.area += s.x0 * s.y1 - s.x1 * s.y0;
+      var ang = Math.atan2(s.y1 - s.y0, s.x1 - s.x0);
+      while (a.next <= a.dist + s.len) {
+        var k = (a.next - a.dist) / s.len;
+        p.arrows.push({ x: s.x0 + (s.x1 - s.x0) * k, y: s.y0 + (s.y1 - s.y0) * k, a: ang });
+        a.next += step;
+      }
+      a.dist += s.len;
+    });
+    Object.keys(acc).forEach(function (id) {
+      var p = data.pieces[id];
+      // Y ekseni yukarı: pozitif alan = saat yönü tersi
+      p.dir = acc[id].area > 0 ? 'ccw' : 'cw';
+      p.perimeter = acc[id].dist;
+    });
+  }
+
+  function dirText(p) {
+    return p && p.dir ? (p.dir === 'cw' ? 'saat yönü' : 'saat yönü tersi') : '';
+  }
+
+  // Parça konturlarına yön ikonlarını (>) ve başlangıç noktasını (●) çizer; ekran koordinatlarında
+  function drawDirections(ctx, d, s, ox, oy) {
+    var stepPx = ARROW_STEP_MM / data.unitMm * s;
+    var every = Math.max(1, Math.ceil(ARROW_GAP_PX / stepPx));
+    var r = Math.max(3, Math.min(6, s * 20));
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    data.pieceOrder.forEach(function (id) {
+      var p = data.pieces[id];
+      if (!p.arrows || !isFinite(p.minX)) return;
+      if (ox + p.maxX * s < -20 || ox + p.minX * s > d.w + 20 || oy - p.minY * s < -20 || oy - p.maxY * s > d.h + 20) return;
+      if (p.perimeter * s < 40) return;
+      var n = p.arrows.length;
+      var list = [];
+      if (n <= every) { if (n) list.push(p.arrows[Math.floor(n / 2)]); }
+      else for (var i = Math.floor(every / 2); i < n; i += every) list.push(p.arrows[i]);
+      ctx.strokeStyle = p.dir === 'cw' ? COLORS.dirCw : COLORS.dirCcw;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      list.forEach(function (ar) {
+        var sx = ox + ar.x * s, sy = oy - ar.y * s;
+        if (sx < -10 || sx > d.w + 10 || sy < -10 || sy > d.h + 10) return;
+        // Dünya açısı ekranda Y ters çevrildiği için -a olur
+        var c = Math.cos(-ar.a), sn = Math.sin(-ar.a);
+        var pt = function (u, v) { return [sx + u * c - v * sn, sy + u * sn + v * c]; };
+        var a1 = pt(-r * 0.6, -r), a2 = pt(r * 0.6, 0), a3 = pt(-r * 0.6, r);
+        ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.lineTo(a3[0], a3[1]);
+      });
+      ctx.stroke();
+      // Başlangıç noktası: kara ikon
+      var bx = ox + p.start.x * s, by = oy - p.start.y * s;
+      ctx.beginPath(); ctx.arc(bx, by, r * 0.8 + 1, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.start; ctx.fill();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+    });
+  }
+
+  function resetDone() {
+    done = { cut: new Path2D(), notch: new Path2D(), move: new Path2D() };
+  }
+  function appendDone(s) {
+    var p = done[s.type];
+    p.moveTo(s.x0, s.y0); p.lineTo(s.x1, s.y1);
+  }
+
+  // ------------------------------------------------------------------
+  // Simülasyon kontrolü
+  // ------------------------------------------------------------------
+  // Seçili başlangıç parçasına göre simülasyon aralığı
+  function simRange() {
+    var segs = data.segments, v = els.startPiece.value;
+    if (v === '') return { start: 0, end: segs.length, piece: null };
+    var p = data.pieces[v];
+    if (!p || p.firstSeg < 0) return { start: 0, end: segs.length, piece: null };
+    // Parçaya giden boş hareket de (N komutundan sonra gelir) aynı parçaya aittir
+    var start = p.firstSeg;
+    while (start > 0 && segs[start - 1].piece === p.id) start--;
+    return { start: start, end: els.onlyPiece.checked ? p.lastSeg + 1 : segs.length, piece: p };
+  }
+
+  function prepareSim() {
+    sim = newSim();
+    if (data) {
+      var r = simRange();
+      sim.start = sim.idx = r.start; sim.end = r.end;
+      resetDone();
+      computeTotalTime();
+    }
+  }
+
+  function fillPieceSelect() {
+    var sel = els.startPiece;
+    sel.innerHTML = '<option value="">Tümü (baştan)</option>';
+    if (!data) return;
+    data.pieceOrder.forEach(function (id, i) {
+      var p = data.pieces[id];
+      if (p.firstSeg < 0) return;
+      var o = document.createElement('option');
+      o.value = id;
+      o.textContent = (i + 1) + '. ' + pieceLabel(p);
+      sel.appendChild(o);
+    });
+  }
+
+  function onRangeChange() {
+    if (!data) return;
+    prepareSim();
+    var r = simRange();
+    if (r.piece) {
+      log('info', 'Başlangıç parçası: ' + pieceLabel(r.piece) + (els.onlyPiece.checked ? ' (yalnızca bu parça)' : ' (pastal sonuna kadar)') +
+        '. Tahmini süre ' + fmtTime(totalTime) + '.');
+      var k = knifePos();
+      if (k) { cam.x = k.x; cam.y = k.y; clampCam(); }
+    } else {
+      log('info', 'Başlangıç: tüm pastal baştan. Tahmini süre ' + fmtTime(totalTime) + '.');
+    }
+    updateButtons(); updateStatus(); renderSim(); renderPreview();
+  }
+  els.startPiece.addEventListener('change', onRangeChange);
+  els.showDir.addEventListener('change', function () { renderSim(); });
+  els.onlyPiece.addEventListener('change', function () { if (els.startPiece.value !== '') onRangeChange(); else updateButtons(); });
+
+  els.btnReset.addEventListener('click', function () {
+    sim.running = false;
+    data = null;
+    els.speed.value = 500;
+    els.follow.checked = true;
+    els.onlyPiece.checked = false;
+    els.fileName.textContent = 'Dosya seçilmedi';
+    els.file.value = '';
+    lastPieceLogged = null;
+    els.log.innerHTML = ''; logCount = { warn: 0, error: 0 }; updateLogCounts();
+    setData(null);
+    log('ok', 'Her şey sıfırlandı. Yeni bir kesim dosyası seçebilirsiniz.');
+  });
+
+  els.btnSim.addEventListener('click', startSim);
+  els.btnPause.addEventListener('click', pauseSim);
+  els.btnStop.addEventListener('click', function () { stopSim(false); });
+  els.btnFit.addEventListener('click', function () { fitView(); renderSim(); renderPreview(); });
+
+  els.speed.addEventListener('change', function () {
+    if (!validSpeed()) { els.speed.value = 500; }
+    if (data) {
+      computeTotalTime();
+      log('info', 'Hız ' + speedMm() + ' mm/sn olarak ayarlandı. Tahmini toplam süre ' + fmtTime(totalTime) + '.');
+      updateStatus();
+    }
+  });
+
+  function startSim() {
+    if (!data) { log('warn', 'Önce bir kesim dosyası seçin.'); return; }
+    if (!validSpeed()) return;
+    if (sim.running) return;
+    if (sim.finished || !sim.started) prepareSim();
+    var fresh = !sim.started;
+    sim.started = true;
+    sim.running = true;
+    sim.lastTs = 0;
+    if (fresh) {
+      var r = simRange();
+      log('info', 'Simülasyon başladı (' + speedMm() + ' mm/sn)' +
+        (r.piece ? ', ' + pieceLabel(r.piece) + (els.onlyPiece.checked ? ' — yalnızca bu parça' : ' parçasından itibaren') : '') + '.');
+      lastPieceLogged = null;
+      if (sim.idx < sim.end) onPieceChange(data.segments[sim.idx].piece);
+    } else {
+      log('info', 'Simülasyon devam ediyor (' + speedMm() + ' mm/sn).');
+    }
+    updateButtons();
+    requestAnimationFrame(tick);
+  }
+  function pauseSim() {
+    if (!sim.running) return;
+    sim.running = false;
+    log('info', 'Simülasyon duraklatıldı (%' + progress().toFixed(1).replace('.', ',') + ').');
+    updateButtons();
+  }
+  function stopSim(silent) {
+    var wasActive = sim.started;
+    prepareSim();
+    if (wasActive && !silent) log('info', 'Simülasyon durduruldu ve başa alındı.');
+    updateButtons(); updateStatus(); renderSim(); renderPreview();
+  }
+
+  function updateButtons() {
+    els.btnSim.disabled = !data || sim.running;
+    els.btnSim.textContent = sim.finished ? '↻ Tekrar Simüle Et' : sim.started ? '▶ Devam Et' : '▶ Simüle Et';
+    els.btnPause.disabled = !sim.running;
+    els.btnStop.disabled = !data || !sim.started;
+    els.startPiece.disabled = !data || sim.running;
+    els.onlyPiece.disabled = !data || sim.running || els.startPiece.value === '';
+    els.btnFit.disabled = !data;
+  }
+
+  var lastPieceLogged = null;
+  function tick(ts) {
+    if (!sim.running) return;
+    var dt = sim.lastTs ? Math.min((ts - sim.lastTs) / 1000, 0.1) : 0;
+    sim.lastTs = ts;
+    advance(dt);
+    if (els.follow.checked) followKnife();
+    updateStatus();
+    renderSim();
+    renderPreview();
+    if (sim.running) requestAnimationFrame(tick);
+  }
+
+  function advance(dt) {
+    var segs = data.segments;
+    while (dt > 0 && sim.idx < sim.end) {
+      var s = segs[sim.idx];
+      var need = segTime(s, sim.pos);
+      if (need <= dt) {
+        dt -= need; sim.t += need;
+        appendDone(s);
+        sim.idx++; sim.pos = 0;
+        if (sim.idx < sim.end && segs[sim.idx].piece !== s.piece) onPieceChange(segs[sim.idx].piece);
+      } else {
+        var unitsPerSec = speedMm() * (s.type === 'move' ? MOVE_SPEED_FACTOR : 1) / data.unitMm;
+        sim.pos += dt * unitsPerSec; sim.t += dt; dt = 0;
+      }
+    }
+    if (sim.idx >= sim.end && !sim.finished) {
+      sim.finished = true; sim.running = false;
+      var cut = {};
+      for (var i = sim.start; i < sim.end; i++) if (segs[i].type !== 'move') cut[segs[i].piece] = 1;
+      log('ok', 'Simülasyon tamamlandı. ' + Object.keys(cut).length + ' parça kesildi, simüle süre ' + fmtTime(sim.t) + '.');
+      updateButtons();
+    }
+  }
+
+  function onPieceChange(id) {
+    if (id === lastPieceLogged) return;
+    lastPieceLogged = id;
+    var p = data.pieces[id];
+    if (!p) return;
+    log('info', 'Parça ' + (data.pieceOrder.indexOf(id) + 1) + '/' + data.pieceOrder.length + ' kesiliyor: ' + pieceLabel(p) +
+      (p.dir ? ' (' + dirText(p) + ')' : ''));
+  }
+
+  function pieceLabel(p) {
+    var a = p.attrs, parts = ['N' + p.id];
+    if (a['PIECE NAME']) parts.push(a['PIECE NAME']);
+    if (a['PIECE SIZE']) parts.push('Beden ' + a['PIECE SIZE']);
+    if (a['LEFT/RIGHT']) parts.push(a['LEFT/RIGHT']);
+    if (p.dir) parts.push(p.dir === 'cw' ? '↻' : '↺');
+    return parts.join(' · ');
+  }
+
+  function knifePos() {
+    if (!data || !data.segments.length) return null;
+    var segs = data.segments;
+    if (sim.idx >= sim.end) {
+      var l = segs[Math.max(sim.start, sim.end - 1)];
+      return { x: l.x1, y: l.y1, down: false, seg: l, dir: Math.atan2(l.y1 - l.y0, l.x1 - l.x0) };
+    }
+    var s = segs[sim.idx], k = s.len ? sim.pos / s.len : 0;
+    return { x: s.x0 + (s.x1 - s.x0) * k, y: s.y0 + (s.y1 - s.y0) * k, down: s.type !== 'move', seg: s,
+             dir: Math.atan2(s.y1 - s.y0, s.x1 - s.x0) };
+  }
+
+  function progress() {
+    return totalTime ? Math.min(100, sim.t / totalTime * 100) : 0;
+  }
+
+  function updateStatus() {
+    var k = data && knifePos();
+    if (!k) {
+      els.knifeState.textContent = 'Bıçak: —'; els.pos.textContent = '—'; els.pieceInfo.textContent = '—';
+      els.timeInfo.textContent = '—'; els.progressBar.style.width = '0'; els.progressPct.textContent = '0%';
+      els.knifeDot.style.background = '';
+      return;
+    }
+    var active = sim.started;
+    var down = active && !sim.finished && k.down;
+    els.knifeState.textContent = 'Bıçak: ' + (down ? (k.seg.type === 'notch' ? 'ÇENTİK' : 'AŞAĞIDA (kesiyor)') : 'YUKARIDA');
+    els.knifeDot.style.background = down ? COLORS.knifeDown : COLORS.knifeUp;
+    var cm = function (u) { return (u * data.unitMm / 10).toFixed(1).replace('.', ','); };
+    els.pos.textContent = active ? 'X ' + cm(k.x) + ' cm · Y ' + cm(k.y) + ' cm' : '—';
+    var p = data.pieces[k.seg.piece];
+    els.pieceInfo.textContent = active && p ? (data.pieceOrder.indexOf(p.id) + 1) + '/' + data.pieceOrder.length + ' — ' + pieceLabel(p) : '—';
+    els.timeInfo.textContent = fmtTime(sim.t) + ' / ' + fmtTime(totalTime);
+    var pct = progress();
+    els.progressBar.style.width = pct + '%';
+    els.progressPct.textContent = '%' + pct.toFixed(1).replace('.', ',');
+  }
+
+  // ------------------------------------------------------------------
+  // Çizim yardımcıları
+  // ------------------------------------------------------------------
+  function sizeCanvas(cv) {
+    var dpr = window.devicePixelRatio || 1;
+    var w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    }
+    return { w: w, h: h, dpr: dpr };
+  }
+
+  function drawPlaceholder(ctx, d, text) {
+    ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+    ctx.fillStyle = '#1d2128'; ctx.fillRect(0, 0, d.w, d.h);
+    ctx.fillStyle = '#9aa3b2'; ctx.font = '14px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, d.w / 2, d.h / 2);
+  }
+
+  // Dünya (pastal birimi) → ekran dönüşümü; Y ekseni yukarı
+  function worldTransform(ctx, dpr, s, ox, oy) {
+    ctx.setTransform(dpr * s, 0, 0, -dpr * s, dpr * ox, dpr * oy);
+  }
+
+  function drawScene(ctx, s, opts) {
+    var b = data.bounds;
+    ctx.fillStyle = COLORS.fabric; ctx.fillRect(0, 0, b.w, b.h);
+    ctx.lineWidth = 1 / s; ctx.strokeStyle = COLORS.fabricEdge; ctx.strokeRect(0, 0, b.w, b.h);
+
+    if (opts.grid) {
+      var step = 100 / data.unitMm;               // 10 cm
+      if (step * s < 25) step *= 10;              // 1 m
+      if (step * s >= 12) {
+        ctx.beginPath();
+        for (var gx = step; gx < b.w; gx += step) { ctx.moveTo(gx, 0); ctx.lineTo(gx, b.h); }
+        for (var gy = step; gy < b.h; gy += step) { ctx.moveTo(0, gy); ctx.lineTo(b.w, gy); }
+        ctx.strokeStyle = COLORS.grid; ctx.stroke();
+      }
+    }
+
+    Object.keys(paths.fills).forEach(function (id) {
+      var p = data.pieces[id];
+      ctx.fillStyle = p && p.color ? 'rgba(' + p.color.join(',') + ',.35)' : COLORS.pieceFill;
+      ctx.fill(paths.fills[id]);
+    });
+    if (opts.currentPiece != null && paths.fills[opts.currentPiece]) {
+      ctx.fillStyle = COLORS.current; ctx.fill(paths.fills[opts.currentPiece]);
+    }
+
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = opts.ghostWidth / s;
+    ctx.strokeStyle = COLORS.ghost; ctx.stroke(paths.ghost); ctx.stroke(paths.notch);
+  }
+
+  function drawDone(ctx, s, cutWidth, k) {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.setLineDash([6 / s, 5 / s]);
+    ctx.lineWidth = 1 / s; ctx.strokeStyle = COLORS.move; ctx.stroke(done.move);
+    ctx.setLineDash([]);
+    ctx.lineWidth = cutWidth / s;
+    ctx.strokeStyle = COLORS.cut; ctx.stroke(done.cut);
+    ctx.strokeStyle = COLORS.notch; ctx.stroke(done.notch);
+    // Yarım kalan aktif hareket
+    if (k && !sim.finished && (sim.pos > 0)) {
+      var sg = k.seg;
+      ctx.beginPath(); ctx.moveTo(sg.x0, sg.y0); ctx.lineTo(k.x, k.y);
+      if (sg.type === 'move') { ctx.setLineDash([6 / s, 5 / s]); ctx.lineWidth = 1 / s; ctx.strokeStyle = COLORS.move; }
+      else { ctx.lineWidth = cutWidth / s; ctx.strokeStyle = sg.type === 'notch' ? COLORS.notch : COLORS.cut; }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Önizleme (tam resim, 200px)
+  // ------------------------------------------------------------------
+  function renderPreview(rebuild) {
+    var cv = els.preview, d = sizeCanvas(cv), ctx = cv.getContext('2d');
+    if (!data) { drawPlaceholder(ctx, d, 'Kesim dosyası (.CUT) seçin — pastalın tamamı burada görünecek'); return; }
+    var b = data.bounds, pad = 10;
+    var s = Math.min((d.w - 2 * pad) / b.w, (d.h - 2 * pad) / b.h);
+    var ox = (d.w - b.w * s) / 2, oy = (d.h + b.h * s) / 2;
+    if (rebuild || !previewCache || previewCache.width !== cv.width || previewCache.height !== cv.height) {
+      previewCache = document.createElement('canvas');
+      previewCache.width = cv.width; previewCache.height = cv.height;
+      var c2 = previewCache.getContext('2d');
+      c2.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+      c2.fillStyle = '#1d2128'; c2.fillRect(0, 0, d.w, d.h);
+      worldTransform(c2, d.dpr, s, ox, oy);
+      drawScene(c2, s, { grid: false, ghostWidth: 1 });
+    }
+    previewView = { s: s, ox: ox, oy: oy };
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(previewCache, 0, 0);
+    worldTransform(ctx, d.dpr, s, ox, oy);
+    var k = knifePos();
+    drawDone(ctx, s, 1.3, k);
+
+    // Simülasyon penceresinin önizlemedeki karşılığı
+    ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+    var sd = { w: els.sim.clientWidth, h: els.sim.clientHeight };
+    var vw = sd.w / cam.s * s, vh = sd.h / cam.s * s;
+    var vx = ox + cam.x * s - vw / 2, vy = oy - cam.y * s - vh / 2;
+    if (vw < b.w * s * 0.98 || vh < b.h * s * 0.98) {
+      ctx.strokeStyle = COLORS.viewport; ctx.lineWidth = 1.5;
+      ctx.strokeRect(vx, vy, vw, vh);
+    }
+    if (k && sim.started) {
+      ctx.beginPath(); ctx.arc(ox + k.x * s, oy - k.y * s, 4, 0, Math.PI * 2);
+      ctx.fillStyle = k.down && !sim.finished ? COLORS.knifeDown : COLORS.knifeUp; ctx.fill();
+    }
+  }
+
+  els.preview.addEventListener('click', function (e) {
+    if (!data) return;
+    var r = els.preview.getBoundingClientRect();
+    cam.x = (e.clientX - r.left - previewView.ox) / previewView.s;
+    cam.y = (previewView.oy - (e.clientY - r.top)) / previewView.s;
+    if (sim.running && els.follow.checked) { els.follow.checked = false; log('info', 'Bıçak takibi kapatıldı (önizlemeden konum seçildi).'); }
+    clampCam(); renderSim(); renderPreview();
+  });
+
+  // ------------------------------------------------------------------
+  // Simülasyon görünümü
+  // ------------------------------------------------------------------
+  function fitView() {
+    if (!data) return;
+    var w = els.sim.clientWidth || 800, h = els.sim.clientHeight || 400, b = data.bounds;
+    // Kumaş eni ekranın yüksekliğine sığsın; pastal kısaysa tamamı sığsın
+    cam.s = (h - 30) / b.h;
+    cam.y = b.h / 2;
+    var k = knifePos();
+    cam.x = (sim.started || sim.start > 0) && k ? k.x : Math.min(b.w / 2, w / 2 / cam.s);
+    clampCam();
+  }
+  function clampCam() {
+    if (!data) return;
+    var b = data.bounds, w = els.sim.clientWidth, h = els.sim.clientHeight;
+    var hw = w / 2 / cam.s, hh = h / 2 / cam.s, m = 20 / cam.s;
+    cam.x = b.w + 2 * m <= 2 * hw ? b.w / 2 : Math.max(hw - m, Math.min(b.w - hw + m, cam.x));
+    cam.y = b.h + 2 * m <= 2 * hh ? b.h / 2 : Math.max(hh - m, Math.min(b.h - hh + m, cam.y));
+  }
+  function followKnife() {
+    var k = knifePos();
+    if (!k) return;
+    cam.x += (k.x - cam.x) * 0.2;
+    cam.y += (k.y - cam.y) * 0.2;
+    clampCam();
+  }
+
+  function renderSim() {
+    var cv = els.sim, d = sizeCanvas(cv), ctx = cv.getContext('2d');
+    if (!data) { drawPlaceholder(ctx, d, 'Dosya seçip "Simüle Et" ile bıçak hareketini izleyin'); return; }
+    ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+    ctx.fillStyle = '#1d2128'; ctx.fillRect(0, 0, d.w, d.h);
+    var s = cam.s, ox = d.w / 2 - cam.x * s, oy = d.h / 2 + cam.y * s;
+    var k = knifePos();
+    var active = sim.started;
+    worldTransform(ctx, d.dpr, s, ox, oy);
+    drawScene(ctx, s, { grid: true, ghostWidth: 1, currentPiece: active && !sim.finished && k ? k.seg.piece : null });
+    drawDone(ctx, s, 2.2, k);
+
+    // Parça etiketleri
+    ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+    var fs = Math.max(10, Math.min(14, s * 25));
+    {
+      ctx.font = fs + 'px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = COLORS.label;
+      data.pieceOrder.forEach(function (id) {
+        var p = data.pieces[id];
+        if (!isFinite(p.minX)) return;
+        var cx = ox + (p.minX + p.maxX) / 2 * s, cy = oy - (p.minY + p.maxY) / 2 * s;
+        if (cx < -100 || cx > d.w + 100 || cy < -20 || cy > d.h + 20) return;
+        var pw = (p.maxX - p.minX) * s;
+        if (pw < 45) return;
+        var a = p.attrs;
+        ctx.fillText('N' + id + (a['PIECE SIZE'] ? ' · ' + a['PIECE SIZE'] : '') + (p.dir ? (p.dir === 'cw' ? ' ↻' : ' ↺') : ''), cx, cy - fs * 0.6);
+        if (a['PIECE NAME'] && pw > 80) {
+          ctx.globalAlpha = 0.75; ctx.fillText(a['PIECE NAME'], cx, cy + fs * 0.6); ctx.globalAlpha = 1;
+        }
+      });
+    }
+
+    if (els.showDir.checked) drawDirections(ctx, d, s, ox, oy);
+
+    // Bıçak
+    if (k && active) {
+      var kx = ox + k.x * s, ky = oy - k.y * s;
+      var down = k.down && !sim.finished;
+      var col = down ? COLORS.knifeDown : COLORS.knifeUp;
+      ctx.save();
+      ctx.translate(kx, ky); ctx.rotate(-k.dir);
+      ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -5); ctx.lineTo(-6, 5); ctx.closePath();
+      ctx.fillStyle = col; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(kx, ky, down ? 5 : 8, 0, Math.PI * 2);
+      ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke();
+      if (down) { ctx.beginPath(); ctx.arc(kx, ky, 2.5, 0, Math.PI * 2); ctx.fillStyle = col; ctx.fill(); }
+    }
+
+    // Ölçek göstergesi
+    var barMm = [10, 50, 100, 500, 1000, 5000].find(function (mm) { return mm / data.unitMm * s >= 60; }) || 5000;
+    var barPx = barMm / data.unitMm * s;
+    ctx.fillStyle = 'rgba(29,33,40,.75)'; ctx.fillRect(8, d.h - 26, barPx + 70, 20);
+    ctx.strokeStyle = '#e6e9ee'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(14, d.h - 12); ctx.lineTo(14 + barPx, d.h - 12); ctx.stroke();
+    ctx.fillStyle = '#e6e9ee'; ctx.font = '11px "Segoe UI", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(barMm >= 1000 ? barMm / 1000 + ' m' : barMm >= 10 ? barMm / 10 + ' cm' : barMm + ' mm', 20 + barPx, d.h - 15);
+  }
+
+  // Fare ile yakınlaştırma ve kaydırma
+  els.sim.addEventListener('wheel', function (e) {
+    if (!data) return;
+    e.preventDefault();
+    var r = els.sim.getBoundingClientRect();
+    var mx = e.clientX - r.left - r.width / 2, my = e.clientY - r.top - r.height / 2;
+    var wx = cam.x + mx / cam.s, wy = cam.y - my / cam.s;
+    var minS = Math.min((r.width - 30) / data.bounds.w, (r.height - 30) / data.bounds.h);
+    cam.s = Math.max(minS, Math.min(50, cam.s * Math.exp(-e.deltaY * 0.0015)));
+    cam.x = wx - mx / cam.s; cam.y = wy + my / cam.s;
+    clampCam(); renderSim(); renderPreview();
+  }, { passive: false });
+
+  var drag = null;
+  els.sim.addEventListener('pointerdown', function (e) {
+    if (!data) return;
+    drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false };
+    els.sim.setPointerCapture(e.pointerId);
+    els.sim.classList.add('dragging');
+  });
+  els.sim.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    if (!drag.moved && els.follow.checked && sim.running) {
+      els.follow.checked = false; log('info', 'Bıçak takibi kapatıldı (görünüm elle kaydırıldı).');
+    }
+    drag.moved = true;
+    cam.x = drag.cx - dx / cam.s; cam.y = drag.cy + dy / cam.s;
+    clampCam(); renderSim(); renderPreview();
+  });
+  function endDrag() { drag = null; els.sim.classList.remove('dragging'); }
+  els.sim.addEventListener('pointerup', endDrag);
+  els.sim.addEventListener('pointercancel', endDrag);
+  els.sim.addEventListener('dblclick', function () { if (data) { fitView(); renderSim(); renderPreview(); } });
+
+  // Boşluk: başlat / duraklat
+  document.addEventListener('keydown', function (e) {
+    if (e.code !== 'Space' || e.target.tagName === 'INPUT') return;
+    e.preventDefault();
+    if (sim.running) pauseSim(); else if (data) startSim();
+  });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { clampCam(); renderPreview(true); renderSim(); }, 60);
+  });
+
+  renderPreview(); renderSim(); updateButtons();
+  log('info', 'Hazır. Gerber / RS-274X kesim dosyası (.CUT) seçin.');
+
+  // Test ve konsol kullanımı için
+  window.CutSim = { parseCut: parseCut, load: function (text, name) {
+    var res = parseCut(text);
+    res.warnings.forEach(function (w) { log('warn', w); });
+    if (res.errors.length) { res.errors.forEach(function (e) { log('error', e); }); setData(null); return res; }
+    els.fileName.textContent = name || 'test';
+    setData(res); return res;
+  } };
+})();
+</script>
+</body>
+</html>
