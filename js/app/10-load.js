@@ -1,4 +1,4 @@
-/* BIÇKIN — Dosya okuma ve birleştirme / file loading & merge. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Dosya okuma ve birleştirme / file loading & merge. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Dosya okuma
   // ------------------------------------------------------------------

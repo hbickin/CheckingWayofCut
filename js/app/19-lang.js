@@ -1,4 +1,4 @@
-/* BIÇKIN — Dil değiştirme / language switching. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Dil değiştirme / language switching. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Dil değiştirme
   // ------------------------------------------------------------------

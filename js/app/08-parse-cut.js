@@ -1,4 +1,4 @@
-/* BIÇKIN — Gerber .CUT okuyucu / CUT reader. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Gerber .CUT okuyucu / CUT reader. Telif © 2026 Hüseyin BIÇKIN. */
   function parseCut(text) {
     var res = {
       format: 'cut', segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',

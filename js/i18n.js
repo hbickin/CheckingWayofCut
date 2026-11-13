@@ -1,4 +1,4 @@
-/* BIÇKIN — çeviriler / translations (Türkçe & English). Telif © 2026 BIÇKIN. */
+/* BIÇKIN — çeviriler / translations (Türkçe & English). Telif © 2026 Hüseyin BIÇKIN. */
   window.BK_I18N = {
     tr: {
       'file.open': '📂 Dosya Seç', 'file.open.title': 'Gerber / RS-274X kesim dosyası (.CUT), HPGL plot dosyası (.PLT) veya DXF çizim dosyası (.DXF) seç',
@@ -87,7 +87,7 @@
       'ph.preview': 'Kesim (.CUT), plot (.PLT) veya DXF dosyası seçin — çizimin tamamı burada görünecek',
       'ph.sim': 'Dosya seçip "Simüle Et" ile bıçak hareketini izleyin',
       'ready': 'Hazır. Gerber / RS-274X kesim (.CUT), HPGL plot (.PLT) veya DXF (.DXF) dosyası seçin.',
-      'copyright': '© 2026 BIÇKIN · Tüm hakları saklıdır · Özel yazılım, izinsiz kopyalanamaz.',
+      'copyright': '© 2026 Hüseyin BIÇKIN · Tüm hakları saklıdır · Özel yazılım, izinsiz kopyalanamaz.',
       'unexpected': 'Beklenmeyen hata: {msg}', 'lang.changed': 'Dil: Türkçe',
       'fb.btn': '💬 Geri Bildirim', 'fb.btn.title': 'Hata bildir ya da istek gönder (GitHub Issues)',
       'fb.heading': 'Geri bildirim gönder',
@@ -215,7 +215,7 @@
       'ph.preview': 'Choose a cut (.CUT), plot (.PLT) or DXF file — the whole drawing will appear here',
       'ph.sim': 'Choose a file and press "Simulate" to watch the knife move',
       'ready': 'Ready. Choose a Gerber / RS-274X cut (.CUT), HPGL plot (.PLT) or DXF (.DXF) file.',
-      'copyright': '© 2026 BIÇKIN · All rights reserved · Proprietary software, no unauthorized copying.',
+      'copyright': '© 2026 Hüseyin BIÇKIN · All rights reserved · Proprietary software, no unauthorized copying.',
       'unexpected': 'Unexpected error: {msg}', 'lang.changed': 'Language: English',
       'fb.btn': '💬 Feedback', 'fb.btn.title': 'Report a bug or send a request (GitHub Issues)',
       'fb.heading': 'Send feedback',

@@ -1,4 +1,4 @@
-/* BIÇKIN — Simülasyon kontrolleri / simulation controls. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Simülasyon kontrolleri / simulation controls. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Simülasyon kontrolü
   // ------------------------------------------------------------------

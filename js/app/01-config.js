@@ -1,4 +1,4 @@
-/* BIÇKIN — Sabitler ve renkler / constants & colors. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Sabitler ve renkler / constants & colors. Telif © 2026 Hüseyin BIÇKIN. */
 
   // Gerber kesim dosyalarında koordinat birimi 0,01 inç = 0,254 mm
   var DEFAULT_UNIT_MM = 0.254;

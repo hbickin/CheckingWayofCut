@@ -1,4 +1,4 @@
-/* BIÇKIN — Geri bildirim ve başlatma / feedback & bootstrap. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Geri bildirim ve başlatma / feedback & bootstrap. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Geri bildirim → GitHub Issues
   // ------------------------------------------------------------------

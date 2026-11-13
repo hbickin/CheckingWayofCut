@@ -11,7 +11,7 @@ Seçtiğiniz `.CUT` dosyaları hiçbir sunucuya gönderilmez, tamamen tarayıcı
 
 ## Lisans / License
 
-**© 2026 BIÇKIN (show.bickin.net). Tüm hakları saklıdır — All rights reserved.**
+**© 2026 Hüseyin BIÇKIN (show.bickin.net). Tüm hakları saklıdır — All rights reserved.**
 
 Bu proje **özel (tescilli) yazılımdır**. Kaynak kodu yalnızca görüntüleme amacıyla bu depoda
 bulunur; telif hakkı sahibinin yazılı izni olmadan kopyalanamaz, değiştirilemez, dağıtılamaz veya

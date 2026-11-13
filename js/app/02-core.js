@@ -1,4 +1,4 @@
-/* BIÇKIN — Dil çekirdeği, L()/num(), $ ve els / i18n core & DOM refs. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Dil çekirdeği, L()/num(), $ ve els / i18n core & DOM refs. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Dil (Türkçe / İngilizce)
   // ------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/* BIÇKIN — Parça seçimi ve nesting / piece selection & nesting. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Parça seçimi ve nesting / piece selection & nesting. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Parça seçimi ve nesting
   // ------------------------------------------------------------------

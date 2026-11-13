@@ -1,4 +1,4 @@
-/* BIÇKIN — DXF okuyucu / DXF reader. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — DXF okuyucu / DXF reader. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // DXF (ASCII, R12 ve sonrası) ayrıştırıcı
   // ------------------------------------------------------------------

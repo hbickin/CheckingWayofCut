@@ -1,4 +1,4 @@
-/* BIÇKIN — Veri yerleştirme, pastal bilgisi, yollar / data & paths. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Veri yerleştirme, pastal bilgisi, yollar / data & paths. Telif © 2026 Hüseyin BIÇKIN. */
   var source = null;
   function setData(res) {
     source = res;

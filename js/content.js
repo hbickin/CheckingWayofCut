@@ -1,4 +1,4 @@
-/* BIÇKIN — versiyon geçmişi ve kullanım kılavuzu içeriği. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — versiyon geçmişi ve kullanım kılavuzu içeriği. Telif © 2026 Hüseyin BIÇKIN. */
   window.BK_VERSIONS = [
     { v: '1.10', date: '2026-11-13',
       tr: ['Geri bildirim düğmesinin yanına <b>Versiyon</b> düğmesi: bu sürüm geçmişi sayfası.',

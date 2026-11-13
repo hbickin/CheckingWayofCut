@@ -1,4 +1,4 @@
-/* BIÇKIN — Versiyon geçmişi / version history. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Versiyon geçmişi / version history. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Versiyon geçmişi
   // ------------------------------------------------------------------

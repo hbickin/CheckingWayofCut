@@ -1,4 +1,4 @@
-/* BIÇKIN — Araç renkleri (T1-T8) / tool colors. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Araç renkleri (T1-T8) / tool colors. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Araç renkleri
   // ------------------------------------------------------------------

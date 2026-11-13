@@ -1,4 +1,4 @@
-/* BIÇKIN — Kullanım kılavuzu / user guide. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Kullanım kılavuzu / user guide. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Kullanım kılavuzu (ekran görüntüsü üzerinde numaralı anlatım)
   // ------------------------------------------------------------------

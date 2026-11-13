@@ -1,4 +1,4 @@
-/* BIÇKIN — PLT (HPGL) okuyucu / PLT reader. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — PLT (HPGL) okuyucu / PLT reader. Telif © 2026 Hüseyin BIÇKIN. */
 
   // Dosya türü: Gerber .CUT mi, HPGL .PLT mi?
   function isPlt(text, name) {

@@ -1,4 +1,4 @@
-/* BIÇKIN — M kod açıklamaları / M-code table. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — M kod açıklamaları / M-code table. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Ayrıştırıcı
   // ------------------------------------------------------------------

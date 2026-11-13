@@ -1,4 +1,4 @@
-/* BIÇKIN — Simülasyon görünümü ve fare / sim view & mouse. Telif © 2026 BIÇKIN. */
+/* BIÇKIN — Simülasyon görünümü ve fare / sim view & mouse. Telif © 2026 Hüseyin BIÇKIN. */
   // ------------------------------------------------------------------
   // Simülasyon görünümü
   // ------------------------------------------------------------------
