@@ -72,6 +72,14 @@ CUT, PLT ve DXF dosyalarının hepsinde çalışır.
 Sağ üstteki **TR | EN** düğmeleriyle arayüz Türkçe ya da İngilizce olur; seçim tarayıcıda hatırlanır.
 İlk açılışta tarayıcı dili Türkçeyse Türkçe, değilse İngilizce gelir.
 
+## Kullanım kılavuzu ve versiyon geçmişi
+
+- **📘 Kullanım Kılavuzu** (yeşil düğme): ekran görüntüsü üzerinde turuncu numaralarla her bölümü anlatan
+  sayfa; numaranın üzerine gelince açıklaması vurgulanır. İlk kullanım için 4 adımlık kısa yol da içerir.
+- **ⓘ Versiyon 1.10**: V1.0'dan bugüne eklenen tüm özellikleri sürüm sırasıyla listeler.
+
+Kılavuzdaki ekran görüntüsü sayfaya gömülüdür; arayüz değiştiğinde yeniden alınmalıdır.
+
 ## Geri bildirim
 
 Sağ üstteki **💬 Geri Bildirim** düğmesi bir form açar (tür: hata bildirimi / özellik isteği / soru,
