@@ -1,7 +1,8 @@
 # Gerber Tech Cut File Reader — BIÇKIN
 
-Gerber Technology / RS-274X (ISO) kesim dosyalarını (`.CUT`) tarayıcıda açan, pastalı gösteren ve
-kesim makinesinin bıçak hareketini simüle eden **tek dosyalık** HTML uygulaması.
+Gerber Technology / RS-274X (ISO) kesim dosyalarını (`.CUT`) ve HPGL plot dosyalarını (`.PLT`) tarayıcıda
+açan, pastalı/kalıbı gösteren ve kesim makinesinin bıçak (ya da plotter kaleminin) hareketini simüle eden
+**tek dosyalık** HTML uygulaması.
 
 **Canlı sürüm:** https://hbickin.github.io/CheckingWayofCut/
 
@@ -17,9 +18,27 @@ Seçtiğiniz `.CUT` dosyaları hiçbir sunucuya gönderilmez, tamamen tarayıcı
 - Yakınlaştırma / kaydırma, bıçağı takip etme, ölçek göstergesi
 - Alt bölümde işlem günlüğü: bilgi, uyarı ve hatalar
 
+## PLT (HPGL) dosyaları
+
+`.PLT` / `.HPGL` dosyaları otomatik tanınır. Her `SP1`…`SP8` aracı ayrı renkte çizilir:
+
+| Araç | Varsayılan renk |
+|---|---|
+| T1 Kalem | siyah |
+| T2 Bıçak | kırmızı |
+| T3–T8 | mavi, yeşil, turuncu, mor, camgöbeği, pembe |
+
+Renkler **Araçlar** şeridindeki renk kutularından değiştirilebilir; seçim tarayıcıda hatırlanır,
+**Varsayılan renkler** ile (veya ⟲ Reset ile) geri alınır. Dosyada kullanılan araçlar kalın yazılır.
+
+Desteklenen HPGL komutları: `IN`, `IP`, `SC` (ölçekleme), `SP` (araç), `PU`/`PD` (kalem/bıçak yukarı/aşağı),
+`PA`/`PR` (mutlak/göreli), `LB` (etiket, `DT` sonlandırıcısıyla), `DI`/`DR` (yazı yönü), `SI` (yazı boyu),
+`LO` (yazı hizası). Plotter birimi 0,025 mm'dir. Her kalem/bıçak aşağı yol bir "yol" (Y1, Y2 …) olarak
+listelenir; kapalı konturlarda saat yönü / tersi, açık yollarda gri yön ikonları gösterilir.
+
 ## Kullanım
 
-1. **📂 Dosya Seç** ile `.CUT` dosyasını seçin.
+1. **📂 Dosya Seç** ile `.CUT` veya `.PLT` dosyasını seçin.
 2. **Başlangıç** listesinden simülasyonun başlayacağı parçayı seçin (varsayılan: tüm pastal baştan).
    **Sadece bu parça** işaretliyse yalnızca o parça kesilir.
 3. **Hız (mm/sn)** kutusuna tam sayı bir hız girin (bıçak kalkıkken boş hareket bunun 2 katı hızla yapılır).

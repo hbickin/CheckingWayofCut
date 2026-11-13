@@ -88,6 +88,17 @@
   .progress { width: 160px; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
   .progress > div { height: 100%; width: 0; background: var(--ok); }
   .legend { display: inline-flex; gap: 10px; align-items: center; }
+  /* --- Araç renkleri (PLT) --- */
+  .tools { display: inline-flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+  .tool { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--muted); }
+  .tool.used { color: var(--text); font-weight: 600; }
+  .tool input[type=color] {
+    width: 22px; height: 18px; padding: 0; border: 1px solid var(--border); border-radius: 3px;
+    background: none; cursor: pointer;
+  }
+  .tool input[type=color]::-webkit-color-swatch-wrapper { padding: 1px; }
+  .tool input[type=color]::-webkit-color-swatch { border: none; border-radius: 2px; }
+  .tool small { color: var(--muted); font-weight: 400; }
   .legend i { font-style: normal; font-weight: 700; }
   .knife-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); vertical-align: middle; margin-right: 4px; }
 
@@ -157,9 +168,9 @@
     </svg>
     <span>BIÇKIN</span>
   </div>
-  <label class="btn primary" title="Gerber / RS-274X kesim dosyası (.CUT) seç">
+  <label class="btn primary" title="Gerber / RS-274X kesim dosyası (.CUT) veya HPGL plot dosyası (.PLT) seç">
     📂 Dosya Seç
-    <input type="file" id="fileInput" accept=".cut,.CUT,.txt,.plt,*/*">
+    <input type="file" id="fileInput" accept=".cut,.CUT,.plt,.PLT,.hpgl,.hpg,.txt,*/*">
   </label>
   <label class="field" title="Simülasyonun başlayacağı parça">
     Başlangıç
@@ -183,6 +194,11 @@
 <div class="bar">
   <span class="title">Pastal</span>
   <span id="markerInfo">—</span>
+</div>
+<div class="bar">
+  <span class="title">Araçlar</span>
+  <span class="tools" id="toolList"></span>
+  <span class="right"><button class="linkbtn" id="btnToolReset" title="Araç renklerini varsayılana döndür">Varsayılan renkler</button></span>
 </div>
 <div id="previewWrap"><canvas id="preview"></canvas></div>
 
@@ -231,8 +247,15 @@
     cut: '#1f6feb', notch: '#e8590c', move: 'rgba(34,197,94,.9)',
     current: 'rgba(59,130,246,.22)', label: '#3d3a33',
     knifeDown: '#ef4444', knifeUp: '#22c55e', viewport: '#ef4444',
-    dirCw: '#15803d', dirCcw: '#9333ea', start: '#000000'
+    dirCw: '#15803d', dirCcw: '#9333ea', dirOpen: '#64748b', start: '#000000'
   };
+  // HPGL plotter birimi: 0,025 mm (1/40 mm)
+  var PLT_UNIT_MM = 0.025;
+  // PLT araçları (SP1..SP8): varsayılan renk ve adlar
+  var TOOL_COUNT = 8;
+  var TOOL_DEFAULTS = ['#000000', '#e11d48', '#2563eb', '#16a34a', '#f59e0b', '#9333ea', '#0891b2', '#db2777'];
+  var TOOL_NAMES = ['Kalem', 'Bıçak', 'Araç 3', 'Araç 4', 'Araç 5', 'Araç 6', 'Araç 7', 'Araç 8'];
+  var TOOL_STORE_KEY = 'bickin.toolColors';
   // Yön ikonları için kontur üzerinde aday nokta aralığı (mm)
   var ARROW_STEP_MM = 20;
   // Ekranda iki yön ikonu arasındaki en küçük mesafe (px)
@@ -248,7 +271,8 @@
     knifeDot: $('knifeDot'), knifeState: $('knifeState'), pos: $('pos'),
     pieceInfo: $('pieceInfo'), timeInfo: $('timeInfo'),
     progressBar: $('progressBar'), progressPct: $('progressPct'),
-    log: $('log'), logCounts: $('logCounts'), btnClearLog: $('btnClearLog')
+    log: $('log'), logCounts: $('logCounts'), btnClearLog: $('btnClearLog'),
+    toolList: $('toolList'), btnToolReset: $('btnToolReset')
   };
 
   // ------------------------------------------------------------------
@@ -288,9 +312,258 @@
     82: 'köşe/aşırı kesim', 83: 'keskin köşe', 84: 'eğri noktası', 85: 'parça kontur başlangıcı'
   };
 
+  // ------------------------------------------------------------------
+  // Araç renkleri
+  // ------------------------------------------------------------------
+  var toolColors = loadToolColors();
+  function loadToolColors() {
+    var c = TOOL_DEFAULTS.slice();
+    try {
+      var saved = JSON.parse(localStorage.getItem(TOOL_STORE_KEY) || 'null');
+      if (Array.isArray(saved)) saved.forEach(function (v, i) { if (i < TOOL_COUNT && /^#[0-9a-f]{6}$/i.test(v)) c[i] = v; });
+    } catch (e) { /* tarayıcı depolaması kullanılamıyor */ }
+    return c;
+  }
+  function saveToolColors() {
+    try { localStorage.setItem(TOOL_STORE_KEY, JSON.stringify(toolColors)); } catch (e) { /* yok say */ }
+  }
+  function toolName(t) { return 'T' + t + ' ' + (TOOL_NAMES[t - 1] || 'Araç ' + t); }
+  function toolColor(t) { return toolColors[t - 1] || '#64748b'; }
+
+  function buildToolList() {
+    els.toolList.innerHTML = '';
+    for (var t = 1; t <= TOOL_COUNT; t++) {
+      var used = data && data.tools && data.tools[t];
+      var lab = document.createElement('label');
+      lab.className = 'tool' + (used ? ' used' : '');
+      lab.title = toolName(t) + ' rengini seç';
+      var inp = document.createElement('input');
+      inp.type = 'color'; inp.value = toolColor(t); inp.dataset.tool = t;
+      inp.addEventListener('input', onToolColor);
+      inp.addEventListener('change', function (e) {
+        var n = Number(e.target.dataset.tool);
+        log('info', toolName(n) + ' rengi ' + toolColor(n) + ' olarak ayarlandı.');
+      });
+      lab.appendChild(inp);
+      lab.appendChild(document.createTextNode(toolName(t)));
+      if (used) {
+        var sm = document.createElement('small');
+        sm.textContent = '(' + used + ' yol)';
+        lab.appendChild(sm);
+      }
+      els.toolList.appendChild(lab);
+    }
+  }
+  function onToolColor(e) {
+    var t = Number(e.target.dataset.tool);
+    toolColors[t - 1] = e.target.value;
+    saveToolColors();
+    if (data) { renderPreview(true); renderSim(); }
+  }
+  els.btnToolReset.addEventListener('click', function () {
+    toolColors = TOOL_DEFAULTS.slice();
+    saveToolColors(); buildToolList();
+    if (data) { renderPreview(true); renderSim(); }
+    log('info', 'Araç renkleri varsayılana döndürüldü (T1 Kalem siyah, T2 Bıçak kırmızı).');
+  });
+
+  // Dosya türü: Gerber .CUT mi, HPGL .PLT mi?
+  function isPlt(text, name) {
+    if (/\.(plt|hpgl?|hpg)$/i.test(name || '')) return true;
+    if (/\.cut$/i.test(name || '')) return false;
+    if (/^\s*H\d*\*/.test(text) || /\*M0+\*/.test(text)) return false;
+    return /^\s*(\x1b[^A-Za-z]*[A-Za-z][^;:]*[;:]?\s*)*(IN|DF|IP|SC|SP|PU|PD|PA)\s*[;\d-]/i.test(text);
+  }
+
+  // HPGL (.PLT) ayrıştırıcı. Çıktı parseCut ile aynı yapıdadır; her kalem/bıçak aşağı
+  // yolu bir "parça" (Y1, Y2 ...) olur ve her hareket hangi araçla yapıldığını (tool) taşır.
+  var PLT_IGNORED = { VS: 1, FS: 1, PT: 1, LT: 1, PW: 1, CT: 1, DF: 1, IW: 1, RO: 1, SR: 1, SL: 1, TL: 1, ES: 1, CS: 1, CA: 1, SS: 1, SA: 1, PS: 1, BP: 1, PG: 1, FT: 1, AS: 1, OI: 1, OS: 1, OP: 1, OE: 1 };
+  function parsePlt(text) {
+    var res = {
+      format: 'plt', segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
+      unitMm: PLT_UNIT_MM, feed: null, warnings: [], errors: [], ended: true, labels: [], tools: {}
+    };
+    var warnOnce = {};
+    function warn(key, msg) {
+      if (warnOnce[key]) { warnOnce[key].n++; return; }
+      warnOnce[key] = { n: 1, msg: msg };
+    }
+
+    text = text.replace(/^﻿/, '');
+    if (!text.trim()) { res.errors.push('Dosya boş.'); return res; }
+    if (/[\x00-\x02\x04-\x08\x0E-\x1A\x1C-\x1F]/.test(text.slice(0, 2000))) {
+      res.errors.push('Dosya metin tabanlı bir HPGL (PLT) dosyası değil (ikili veri içeriyor).');
+      return res;
+    }
+
+    var x = 0, y = 0, down = false, tool = 1, rel = false;
+    var ip = [0, 0, 1016, 1016], sc = null;
+    var dirAng = 0, charH = 0.375, lo = 1, term = '\x03';
+    var piece = null, pathCount = 0, closeTol = 0.5 / PLT_UNIT_MM;
+
+    function scaleX() { return sc ? (ip[2] - ip[0]) / (sc[1] - sc[0]) : 1; }
+    function scaleY() { return sc ? (ip[3] - ip[1]) / (sc[3] - sc[2]) : 1; }
+    function abs(ux, uy) {
+      return sc ? [ip[0] + (ux - sc[0]) * scaleX(), ip[1] + (uy - sc[2]) * scaleY()] : [ux, uy];
+    }
+    function endPath() {
+      if (piece) {
+        var p = res.pieces[piece];
+        p.closed = Math.hypot(p.sx - x, p.sy - y) <= closeTol;
+      }
+      piece = null;
+    }
+    function moveTo(nx, ny) {
+      if (!isFinite(nx) || !isFinite(ny)) { warn('nan', 'Geçersiz koordinat değeri atlandı.'); return; }
+      var len = Math.hypot(nx - x, ny - y);
+      if (down && !piece) {
+        piece = ++pathCount;
+        res.pieces[piece] = {
+          id: piece, code: 'Y', tool: tool, minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity,
+          attrs: { 'PIECE NAME': toolName(tool) }, cutLen: 0, firstSeg: -1, lastSeg: -1, sx: x, sy: y
+        };
+        res.pieceOrder.push(piece);
+        res.tools[tool] = (res.tools[tool] || 0) + 1;
+      }
+      if (len > 0) {
+        var type = down ? 'cut' : 'move';
+        res.segments.push({ x0: x, y0: y, x1: nx, y1: ny, len: len, type: type, piece: down ? piece : 0, tool: tool });
+        if (down) {
+          var p = res.pieces[piece];
+          p.minX = Math.min(p.minX, x, nx); p.maxX = Math.max(p.maxX, x, nx);
+          p.minY = Math.min(p.minY, y, ny); p.maxY = Math.max(p.maxY, y, ny);
+          p.cutLen += len;
+          if (p.firstSeg < 0) p.firstSeg = res.segments.length - 1;
+          p.lastSeg = res.segments.length - 1;
+        }
+      }
+      x = nx; y = ny;
+    }
+    function plotPoints(nums, mn) {
+      if (nums.length % 2) warn('odd' + mn, mn + ' komutunda tek sayıda koordinat var; son değer atlandı.');
+      for (var k = 0; k + 1 < nums.length; k += 2) {
+        if (rel) moveTo(x + nums[k] * scaleX(), y + nums[k + 1] * scaleY());
+        else { var a = abs(nums[k], nums[k + 1]); moveTo(a[0], a[1]); }
+      }
+    }
+
+    var i = 0, n = text.length, first = true;
+    while (i < n) {
+      var ch = text[i];
+      if (/[\s;,]/.test(ch)) { i++; continue; }
+      if (ch === '\x1b') {                     // aygıt kontrol dizisi (ESC.…): satır sonuna ya da ':' e kadar atla
+        var e = text.slice(i).search(/[:\r\n]/);
+        i = e < 0 ? n : i + e + 1;
+        continue;
+      }
+      var mm = /^[A-Za-z]{2}/.exec(text.slice(i, i + 2));
+      if (!mm) { warn('chr' + ch, 'Tanınmayan karakter "' + ch + '" atlandı.'); i++; continue; }
+      var mn = mm[0].toUpperCase();
+      i += 2;
+      if (first) {
+        first = false;
+        if (mn !== 'IN' && mn !== 'DF') res.warnings.push('Dosya IN (başlat) komutu ile başlamıyor.');
+      }
+
+      if (mn === 'LB') {
+        var end = text.indexOf(term, i);
+        if (end < 0) {
+          var nl = text.slice(i).search(/[\r\n]/);
+          end = nl < 0 ? n : i + nl;
+          warn('lbterm', 'Etiket (LB) sonlandırıcı karakteri olmadan bitti.');
+        }
+        var lbText = text.slice(i, end).replace(/[\r\n]+/g, ' ');
+        i = end < n && text[end] === term ? end + 1 : end;
+        if (lbText.trim()) {
+          res.labels.push({ x: x, y: y, text: lbText, ang: dirAng, h: charH * 10 / PLT_UNIT_MM, lo: lo, tool: tool });
+          res.tools[tool] = res.tools[tool] || 0;
+        }
+        continue;
+      }
+      if (mn === 'DT') {
+        if (i < n && text[i] !== ';') { term = text[i]; i++; }
+        continue;
+      }
+
+      var pe = text.slice(i).search(/[;A-Za-z\x1b]/);
+      var raw = pe < 0 ? text.slice(i) : text.slice(i, i + pe);
+      i = pe < 0 ? n : i + pe;
+      var nums = raw.trim() ? raw.trim().split(/[\s,]+/).map(Number) : [];
+
+      switch (mn) {
+        case 'IN':
+          endPath(); down = false; rel = false; sc = null; ip = [0, 0, 1016, 1016];
+          dirAng = 0; charH = 0.375; lo = 1; term = '\x03';
+          break;
+        case 'IP': if (nums.length >= 4) ip = nums.slice(0, 4); break;
+        case 'SC':
+          if (nums.length >= 4 && nums[1] !== nums[0] && nums[3] !== nums[2]) {
+            sc = nums.slice(0, 4);
+            if (Math.abs(scaleX() - scaleY()) > 1e-9) warn('aniso', 'X ve Y ölçekleri farklı (SC/IP); çizim orantısız olabilir.');
+          } else sc = null;
+          break;
+        case 'SP':
+          endPath(); down = false;
+          var t = nums.length ? Math.round(nums[0]) : 0;
+          if (t < 1 || t > TOOL_COUNT) warn('sp' + t, 'SP' + t + ' geçersiz araç numarası (1–' + TOOL_COUNT + '); T1 kullanıldı.');
+          tool = t >= 1 && t <= TOOL_COUNT ? t : 1;
+          break;
+        case 'PU': endPath(); down = false; plotPoints(nums, mn); break;
+        case 'PD': down = true; plotPoints(nums, mn); break;
+        case 'PA': rel = false; plotPoints(nums, mn); break;
+        case 'PR': rel = true; plotPoints(nums, mn); break;
+        case 'DI': case 'DR':
+          if (nums.length >= 2 && (nums[0] || nums[1])) dirAng = Math.atan2(nums[1], nums[0]);
+          else dirAng = 0;
+          break;
+        case 'SI': if (nums.length >= 2 && nums[1] > 0) charH = nums[1]; break;
+        case 'LO': if (nums.length && nums[0] >= 1 && nums[0] <= 19) lo = ((Math.round(nums[0]) - 1) % 10) % 9 + 1; break;
+        default:
+          if (PLT_IGNORED[mn]) break;
+          warn('mn' + mn, '"' + mn + '" komutu desteklenmiyor, atlandı.');
+      }
+    }
+    endPath();
+
+    // Boş hareketleri bir sonraki yola bağla (yola yaklaşma hareketi o yolun parçası sayılır)
+    var next = 0;
+    for (var j = res.segments.length - 1; j >= 0; j--) {
+      var sg = res.segments[j];
+      if (sg.type !== 'move') next = sg.piece;
+      else sg.piece = next || pathCount;
+    }
+
+    // Negatif koordinat varsa her şeyi kaydırarak (0,0) başlangıcına al
+    var mnX = 0, mnY = 0, mxX = 0, mxY = 0;
+    res.segments.forEach(function (s) {
+      mnX = Math.min(mnX, s.x0, s.x1); mnY = Math.min(mnY, s.y0, s.y1);
+      mxX = Math.max(mxX, s.x0, s.x1); mxY = Math.max(mxY, s.y0, s.y1);
+    });
+    res.labels.forEach(function (l) { mnX = Math.min(mnX, l.x); mnY = Math.min(mnY, l.y); mxX = Math.max(mxX, l.x); mxY = Math.max(mxY, l.y + l.h); });
+    if (mnX < 0 || mnY < 0) {
+      var dx = -mnX, dy = -mnY;
+      res.segments.forEach(function (s) { s.x0 += dx; s.x1 += dx; s.y0 += dy; s.y1 += dy; });
+      res.labels.forEach(function (l) { l.x += dx; l.y += dy; });
+      res.pieceOrder.forEach(function (id) { var p = res.pieces[id]; p.minX += dx; p.maxX += dx; p.minY += dy; p.maxY += dy; });
+      mxX += dx; mxY += dy;
+      res.warnings.push('Negatif koordinatlar bulundu; çizim (0,0) noktasına kaydırıldı.');
+    }
+    var margin = 5 / PLT_UNIT_MM;
+    res.bounds = { w: mxX + margin, h: mxY + margin };
+
+    Object.keys(warnOnce).forEach(function (k) {
+      var w = warnOnce[k];
+      res.warnings.push(w.msg + (w.n > 1 ? ' (' + w.n + ' kez)' : ''));
+    });
+    if (!res.segments.some(function (s) { return s.type !== 'move'; })) {
+      res.errors.push('Dosyada çizim/kesim hareketi (PD ile kalem/bıçak aşağıda) bulunamadı.');
+    }
+    return res;
+  }
+
   function parseCut(text) {
     var res = {
-      segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
+      format: 'cut', segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
       unitMm: DEFAULT_UNIT_MM, feed: null, warnings: [], errors: [], ended: false
     };
     var warnOnce = {};
@@ -532,12 +805,14 @@
       log('error', 'Dosya çok büyük (50 MB üzeri); yükleme iptal edildi.');
       return;
     }
+    var fname = file.name;
     var reader = new FileReader();
     reader.onerror = function () { log('error', 'Dosya okunamadı: ' + (reader.error ? reader.error.message : 'bilinmeyen hata')); };
     reader.onload = function () {
       var t0 = performance.now();
       var res;
-      try { res = parseCut(String(reader.result)); }
+      var text = String(reader.result);
+      try { res = isPlt(text, fname) ? parsePlt(text) : parseCut(text); }
       catch (e) { log('error', 'Ayrıştırma hatası: ' + e.message); return; }
       res.warnings.forEach(function (w) { log('warn', w); });
       if (res.errors.length) {
@@ -546,7 +821,9 @@
         setData(null);
         return;
       }
+      if (res.format === 'plt') res.info['Marker Name'] = fname.replace(/\.[^.]+$/, '');
       setData(res);
+      if (res.format === 'plt') { logPltSummary(res, performance.now() - t0); return; }
       var cutCount = 0, cutLen = 0, moveLen = 0, notches = 0;
       res.segments.forEach(function (s) {
         if (s.type === 'move') moveLen += s.len;
@@ -565,6 +842,22 @@
     els.file.value = '';
   });
 
+  function logPltSummary(res, ms) {
+    var cutLen = 0, moveLen = 0, closed = 0;
+    res.segments.forEach(function (s) { if (s.type === 'move') moveLen += s.len; else cutLen += s.len; });
+    res.pieceOrder.forEach(function (id) { if (res.pieces[id].closed) closed++; });
+    log('ok', 'PLT (HPGL) dosyası yüklendi (' + Math.round(ms) + ' ms): ' + res.pieceOrder.length + ' yol (' +
+      closed + ' kapalı kontur), ' + res.segments.length + ' hareket, ' + res.labels.length + ' etiket.');
+    var used = Object.keys(res.tools).map(Number).sort(function (a, b) { return a - b; });
+    log('info', 'Kullanılan araçlar: ' + used.map(function (t) { return toolName(t) + ' (' + res.tools[t] + ' yol)'; }).join(', ') + '.');
+    log('info', 'Çizim/kesim yolu ' + fmtLen(cutLen) + ', boş hareket ' + fmtLen(moveLen) +
+      '. Tahmini süre ' + fmtTime(totalTime) + ' (' + speedMm() + ' mm/sn).');
+    res.labels.forEach(function (l) { log('info', 'Etiket (' + toolName(l.tool) + '): "' + l.text.trim() + '"'); });
+    var cw = 0, ccw = 0, open = 0;
+    res.pieceOrder.forEach(function (id) { var d = res.pieces[id].dir; if (d === 'cw') cw++; else if (d === 'ccw') ccw++; else open++; });
+    log('info', 'Yön: ' + cw + ' kontur saat yönünde (>), ' + ccw + ' kontur saat yönü tersinde (<), ' + open + ' açık yol.');
+  }
+
   function setData(res) {
     data = res;
     sim = newSim();
@@ -580,7 +873,12 @@
       if (i['Marker Name']) bits.push('<b>' + esc(i['Marker Name']) + '</b>');
       bits.push('Boy: <b>' + fmtLen(b.w) + '</b>');
       bits.push('En: <b>' + fmtLen(b.h) + '</b>');
-      bits.push('Parça: <b>' + data.pieceOrder.length + '</b>');
+      if (data.format === 'plt') {
+        bits.push('Biçim: <b>HPGL (PLT)</b>');
+        bits.push('Yol: <b>' + data.pieceOrder.length + '</b>');
+      } else {
+        bits.push('Parça: <b>' + data.pieceOrder.length + '</b>');
+      }
       if (i['MARKER UTILTIZATION'] || i['MARKER UTILIZATION']) bits.push('Verim: <b>%' + esc(i['MARKER UTILTIZATION'] || i['MARKER UTILIZATION']) + '</b>');
       if (i['CUT GEN DATE']) bits.push('Tarih: <b>' + esc(i['CUT GEN DATE']) + '</b>');
       els.markerInfo.innerHTML = bits.join(' &nbsp;·&nbsp; ');
@@ -588,6 +886,7 @@
       els.markerInfo.textContent = '—';
       fillPieceSelect();
     }
+    buildToolList();
     updateButtons();
     updateStatus();
     renderPreview(true);
@@ -599,10 +898,20 @@
   }
 
   function buildPaths() {
-    paths = { ghost: new Path2D(), notch: new Path2D(), fills: {} };
+    paths = { ghost: new Path2D(), notch: new Path2D(), fills: {}, tools: {} };
     var lastPiece = null, poly = null;
+    var plt = data.format === 'plt';
     data.segments.forEach(function (s) {
       if (s.type === 'move') return;
+      if (plt) {
+        // PLT: her araç kendi rengiyle; yalnızca kapalı konturlar doldurulur
+        var tp = paths.tools[s.tool] || (paths.tools[s.tool] = new Path2D());
+        tp.moveTo(s.x0, s.y0); tp.lineTo(s.x1, s.y1);
+        if (!data.pieces[s.piece] || !data.pieces[s.piece].closed) return;
+        if (s.piece !== lastPiece) { poly = paths.fills[s.piece] = new Path2D(); lastPiece = s.piece; poly.moveTo(s.x0, s.y0); }
+        poly.lineTo(s.x1, s.y1);
+        return;
+      }
       var target = s.type === 'notch' ? paths.notch : paths.ghost;
       target.moveTo(s.x0, s.y0); target.lineTo(s.x1, s.y1);
       // Parça dolgusu: çentik uçlarını atlayıp kontur noktalarını tek çokgende birleştir
@@ -639,14 +948,14 @@
     });
     Object.keys(acc).forEach(function (id) {
       var p = data.pieces[id];
-      // Y ekseni yukarı: pozitif alan = saat yönü tersi
-      p.dir = acc[id].area > 0 ? 'ccw' : 'cw';
+      // Y ekseni yukarı: pozitif alan = saat yönü tersi. PLT'de kapalı olmayan yol "açık" sayılır.
+      p.dir = p.closed === false ? 'open' : acc[id].area > 0 ? 'ccw' : 'cw';
       p.perimeter = acc[id].dist;
     });
   }
 
   function dirText(p) {
-    return p && p.dir ? (p.dir === 'cw' ? 'saat yönü' : 'saat yönü tersi') : '';
+    return p && p.dir ? ({ cw: 'saat yönü', ccw: 'saat yönü tersi', open: 'açık yol' })[p.dir] : '';
   }
 
   // Parça konturlarına yön ikonlarını (>) ve başlangıç noktasını (●) çizer; ekran koordinatlarında
@@ -664,7 +973,7 @@
       var list = [];
       if (n <= every) { if (n) list.push(p.arrows[Math.floor(n / 2)]); }
       else for (var i = Math.floor(every / 2); i < n; i += every) list.push(p.arrows[i]);
-      ctx.strokeStyle = p.dir === 'cw' ? COLORS.dirCw : COLORS.dirCcw;
+      ctx.strokeStyle = p.dir === 'cw' ? COLORS.dirCw : p.dir === 'ccw' ? COLORS.dirCcw : COLORS.dirOpen;
       ctx.lineWidth = 2;
       ctx.beginPath();
       list.forEach(function (ar) {
@@ -686,10 +995,12 @@
   }
 
   function resetDone() {
-    done = { cut: new Path2D(), notch: new Path2D(), move: new Path2D() };
+    done = { cut: new Path2D(), notch: new Path2D(), move: new Path2D(), tools: {} };
   }
   function appendDone(s) {
-    var p = done[s.type];
+    var p = data.format === 'plt' && s.type !== 'move'
+      ? (done.tools[s.tool] || (done.tools[s.tool] = new Path2D()))
+      : done[s.type];
     p.moveTo(s.x0, s.y0); p.lineTo(s.x1, s.y1);
   }
 
@@ -760,6 +1071,7 @@
     els.file.value = '';
     lastPieceLogged = null;
     els.log.innerHTML = ''; logCount = { warn: 0, error: 0 }; updateLogCounts();
+    toolColors = TOOL_DEFAULTS.slice(); saveToolColors();
     setData(null);
     log('ok', 'Her şey sıfırlandı. Yeni bir kesim dosyası seçebilirsiniz.');
   });
@@ -864,16 +1176,18 @@
     lastPieceLogged = id;
     var p = data.pieces[id];
     if (!p) return;
-    log('info', 'Parça ' + (data.pieceOrder.indexOf(id) + 1) + '/' + data.pieceOrder.length + ' kesiliyor: ' + pieceLabel(p) +
+    var plt = data.format === 'plt';
+    log('info', (plt ? 'Yol ' : 'Parça ') + (data.pieceOrder.indexOf(id) + 1) + '/' + data.pieceOrder.length +
+      (plt && p.tool === 1 ? ' çiziliyor: ' : ' kesiliyor: ') + pieceLabel(p) +
       (p.dir ? ' (' + dirText(p) + ')' : ''));
   }
 
   function pieceLabel(p) {
-    var a = p.attrs, parts = ['N' + p.id];
+    var a = p.attrs, parts = [(p.code || 'N') + p.id];
     if (a['PIECE NAME']) parts.push(a['PIECE NAME']);
     if (a['PIECE SIZE']) parts.push('Beden ' + a['PIECE SIZE']);
     if (a['LEFT/RIGHT']) parts.push(a['LEFT/RIGHT']);
-    if (p.dir) parts.push(p.dir === 'cw' ? '↻' : '↺');
+    if (p.dir && p.dir !== 'open') parts.push(p.dir === 'cw' ? '↻' : '↺');
     return parts.join(' · ');
   }
 
@@ -903,8 +1217,14 @@
     }
     var active = sim.started;
     var down = active && !sim.finished && k.down;
-    els.knifeState.textContent = 'Bıçak: ' + (down ? (k.seg.type === 'notch' ? 'ÇENTİK' : 'AŞAĞIDA (kesiyor)') : 'YUKARIDA');
-    els.knifeDot.style.background = down ? COLORS.knifeDown : COLORS.knifeUp;
+    if (data.format === 'plt') {
+      var t = k.seg.tool, isPen = t === 1;
+      els.knifeState.textContent = toolName(t) + ': ' + (down ? (isPen ? 'AŞAĞIDA (çiziyor)' : 'AŞAĞIDA (kesiyor)') : 'YUKARIDA');
+      els.knifeDot.style.background = down ? toolColor(t) : COLORS.knifeUp;
+    } else {
+      els.knifeState.textContent = 'Bıçak: ' + (down ? (k.seg.type === 'notch' ? 'ÇENTİK' : 'AŞAĞIDA (kesiyor)') : 'YUKARIDA');
+      els.knifeDot.style.background = down ? COLORS.knifeDown : COLORS.knifeUp;
+    }
     var cm = function (u) { return (u * data.unitMm / 10).toFixed(1).replace('.', ','); };
     els.pos.textContent = active ? 'X ' + cm(k.x) + ' cm · Y ' + cm(k.y) + ' cm' : '—';
     var p = data.pieces[k.seg.piece];
@@ -967,7 +1287,34 @@
 
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.lineWidth = opts.ghostWidth / s;
+    if (data.format === 'plt') {
+      // Henüz yapılmamış yollar araç renginde, soluk
+      ctx.globalAlpha = 0.45;
+      Object.keys(paths.tools).forEach(function (t) { ctx.strokeStyle = toolColor(Number(t)); ctx.stroke(paths.tools[t]); });
+      ctx.globalAlpha = 1;
+      return;
+    }
     ctx.strokeStyle = COLORS.ghost; ctx.stroke(paths.ghost); ctx.stroke(paths.notch);
+  }
+
+  // PLT etiketleri (LB): araç renginde, DI yönü, SI boyu ve LO hizalamasıyla; ekran koordinatlarında
+  function drawPltLabels(ctx, d, s, ox, oy) {
+    var aligns = ['left', 'center', 'right'], bases = ['bottom', 'middle', 'top'];
+    data.labels.forEach(function (l) {
+      var px = l.h * s;
+      if (px < 5) return;
+      var sx = ox + l.x * s, sy = oy - l.y * s;
+      if (sx < -2000 || sx > d.w + 2000 || sy < -200 || sy > d.h + 200) return;
+      var lo = l.lo || 1;
+      ctx.save();
+      ctx.translate(sx, sy); ctx.rotate(-l.ang);
+      ctx.font = '600 ' + (px * 1.35).toFixed(1) + 'px "Segoe UI", sans-serif';
+      ctx.textAlign = aligns[Math.floor((lo - 1) / 3)] || 'left';
+      ctx.textBaseline = bases[(lo - 1) % 3] || 'bottom';
+      ctx.fillStyle = toolColor(l.tool);
+      ctx.fillText(l.text, 0, 0);
+      ctx.restore();
+    });
   }
 
   function drawDone(ctx, s, cutWidth, k) {
@@ -978,12 +1325,16 @@
     ctx.lineWidth = cutWidth / s;
     ctx.strokeStyle = COLORS.cut; ctx.stroke(done.cut);
     ctx.strokeStyle = COLORS.notch; ctx.stroke(done.notch);
+    Object.keys(done.tools).forEach(function (t) { ctx.strokeStyle = toolColor(Number(t)); ctx.stroke(done.tools[t]); });
     // Yarım kalan aktif hareket
     if (k && !sim.finished && (sim.pos > 0)) {
       var sg = k.seg;
       ctx.beginPath(); ctx.moveTo(sg.x0, sg.y0); ctx.lineTo(k.x, k.y);
       if (sg.type === 'move') { ctx.setLineDash([6 / s, 5 / s]); ctx.lineWidth = 1 / s; ctx.strokeStyle = COLORS.move; }
-      else { ctx.lineWidth = cutWidth / s; ctx.strokeStyle = sg.type === 'notch' ? COLORS.notch : COLORS.cut; }
+      else {
+        ctx.lineWidth = cutWidth / s;
+        ctx.strokeStyle = data.format === 'plt' ? toolColor(sg.tool) : sg.type === 'notch' ? COLORS.notch : COLORS.cut;
+      }
       ctx.stroke(); ctx.setLineDash([]);
     }
   }
@@ -993,7 +1344,7 @@
   // ------------------------------------------------------------------
   function renderPreview(rebuild) {
     var cv = els.preview, d = sizeCanvas(cv), ctx = cv.getContext('2d');
-    if (!data) { drawPlaceholder(ctx, d, 'Kesim dosyası (.CUT) seçin — pastalın tamamı burada görünecek'); return; }
+    if (!data) { drawPlaceholder(ctx, d, 'Kesim (.CUT) veya plot (.PLT) dosyası seçin — çizimin tamamı burada görünecek'); return; }
     var b = data.bounds, pad = 10;
     var s = Math.min((d.w - 2 * pad) / b.w, (d.h - 2 * pad) / b.h);
     var ox = (d.w - b.w * s) / 2, oy = (d.h + b.h * s) / 2;
@@ -1024,7 +1375,7 @@
     }
     if (k && sim.started) {
       ctx.beginPath(); ctx.arc(ox + k.x * s, oy - k.y * s, 4, 0, Math.PI * 2);
-      ctx.fillStyle = k.down && !sim.finished ? COLORS.knifeDown : COLORS.knifeUp; ctx.fill();
+      ctx.fillStyle = k.down && !sim.finished ? (data.format === 'plt' ? toolColor(k.seg.tool) : COLORS.knifeDown) : COLORS.knifeUp; ctx.fill();
     }
   }
 
@@ -1045,6 +1396,8 @@
     var w = els.sim.clientWidth || 800, h = els.sim.clientHeight || 400, b = data.bounds;
     // Kumaş eni ekranın yüksekliğine sığsın; pastal kısaysa tamamı sığsın
     cam.s = (h - 30) / b.h;
+    // PLT çizimleri genelde tek parça/kalıptır: tamamı ekrana sığsın
+    if (data.format === 'plt') cam.s = Math.min(cam.s, (w - 30) / b.w);
     cam.y = b.h / 2;
     var k = knifePos();
     cam.x = (sim.started || sim.start > 0) && k ? k.x : Math.min(b.w / 2, w / 2 / cam.s);
@@ -1077,10 +1430,11 @@
     drawScene(ctx, s, { grid: true, ghostWidth: 1, currentPiece: active && !sim.finished && k ? k.seg.piece : null });
     drawDone(ctx, s, 2.2, k);
 
-    // Parça etiketleri
+    // Parça etiketleri (PLT'de dosyanın kendi LB etiketleri çizilir)
     ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
     var fs = Math.max(10, Math.min(14, s * 25));
-    {
+    if (data.format === 'plt') drawPltLabels(ctx, d, s, ox, oy);
+    else {
       ctx.font = fs + 'px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = COLORS.label;
       data.pieceOrder.forEach(function (id) {
@@ -1104,7 +1458,7 @@
     if (k && active) {
       var kx = ox + k.x * s, ky = oy - k.y * s;
       var down = k.down && !sim.finished;
-      var col = down ? COLORS.knifeDown : COLORS.knifeUp;
+      var col = down ? (data.format === 'plt' ? toolColor(k.seg.tool) : COLORS.knifeDown) : COLORS.knifeUp;
       ctx.save();
       ctx.translate(kx, ky); ctx.rotate(-k.dir);
       ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -5); ctx.lineTo(-6, 5); ctx.closePath();
@@ -1174,12 +1528,13 @@
     resizeTimer = setTimeout(function () { clampCam(); renderPreview(true); renderSim(); }, 60);
   });
 
+  buildToolList();
   renderPreview(); renderSim(); updateButtons();
-  log('info', 'Hazır. Gerber / RS-274X kesim dosyası (.CUT) seçin.');
+  log('info', 'Hazır. Gerber / RS-274X kesim dosyası (.CUT) veya HPGL plot dosyası (.PLT) seçin.');
 
   // Test ve konsol kullanımı için
-  window.CutSim = { parseCut: parseCut, load: function (text, name) {
-    var res = parseCut(text);
+  window.CutSim = { parseCut: parseCut, parsePlt: parsePlt, load: function (text, name) {
+    var res = isPlt(text, name) ? parsePlt(text) : parseCut(text);
     res.warnings.forEach(function (w) { log('warn', w); });
     if (res.errors.length) { res.errors.forEach(function (e) { log('error', e); }); setData(null); return res; }
     els.fileName.textContent = name || 'test';
