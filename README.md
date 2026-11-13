@@ -36,6 +36,19 @@ Desteklenen HPGL komutları: `IN`, `IP`, `SC` (ölçekleme), `SP` (araç), `PU`/
 `LO` (yazı hizası). Plotter birimi 0,025 mm'dir. Her kalem/bıçak aşağı yol bir "yol" (Y1, Y2 …) olarak
 listelenir; kapalı konturlarda saat yönü / tersi, açık yollarda gri yön ikonları gösterilir.
 
+## Dil / Language
+
+Sağ üstteki **TR | EN** düğmeleriyle arayüz Türkçe ya da İngilizce olur; seçim tarayıcıda hatırlanır.
+İlk açılışta tarayıcı dili Türkçeyse Türkçe, değilse İngilizce gelir.
+
+## Geri bildirim
+
+Sağ üstteki **💬 Geri Bildirim** düğmesi bir form açar (tür: hata bildirimi / özellik isteği / soru,
+başlık, açıklama). **GitHub'da gönder** ile bu repodaki
+[Issues](https://github.com/hbickin/CheckingWayofCut/issues) sayfası yeni sekmede, form doldurulmuş
+olarak açılır; gönderen kişi orada **Create** ile kaydı oluşturur (GitHub hesabı gerekir).
+İstenirse dosya adı/türü, tarayıcı ve son günlük satırları da eklenir; dosyanın içeriği gönderilmez.
+
 ## Kullanım
 
 1. **📂 Dosya Seç** ile `.CUT` veya `.PLT` dosyasını seçin.
