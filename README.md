@@ -146,11 +146,33 @@ index.html            # yalnızca sayfa iskeleti (HTML)
 css/styles.css        # tüm stiller
 js/i18n.js            # Türkçe / İngilizce çeviriler
 js/content.js         # versiyon geçmişi + kullanım kılavuzu metinleri
-js/app.js             # uygulama mantığı (okuyucular, simülasyon, nesting, arayüz)
+js/app/               # uygulama mantığı, konu konu 20 küçük dosyaya bölünmüş:
+  01-config.js        #   sabitler, renkler
+  02-core.js          #   dil çekirdeği (L/num), $ ve els (DOM kısayolları)
+  03-log.js           #   işlem günlüğü
+  04-tables.js        #   M-kod tablosu
+  05-tools.js         #   araç renkleri (T1–T8)
+  06-parse-plt.js     #   PLT (HPGL) okuyucu
+  07-parse-dxf.js     #   DXF okuyucu
+  08-parse-cut.js     #   Gerber .CUT okuyucu
+  09-state.js         #   durum, hız, biçimlendirme
+  10-load.js          #   dosya okuma ve birleştirme
+  11-view-data.js     #   veri yerleştirme, pastal bilgisi, yollar
+  12-controls.js      #   simülasyon kontrolleri
+  13-draw.js          #   çizim yardımcıları
+  14-preview.js       #   önizleme (200px)
+  15-simview.js       #   simülasyon görünümü ve fare
+  16-nesting.js       #   parça seçimi ve nesting
+  17-version.js       #   versiyon geçmişi
+  18-guide.js         #   kullanım kılavuzu
+  19-lang.js          #   dil değiştirme
+  20-boot.js          #   geri bildirim ve başlatma (en son çalışır)
 assets/favicon.svg    # sekme ikonu (BIÇKIN karakteri)
 assets/guide.jpg      # kullanım kılavuzundaki ekran görüntüsü
 sample/               # örnek .CUT / .PLT / .DXF dosyaları
 ```
 
-> Komut dosyaları sırayla yüklenir: `i18n.js` ve `content.js` verileri hazırlar, `app.js` bunları kullanır.
+> Komut dosyaları sırayla yüklenir: `i18n.js` ve `content.js` verileri hazırlar; `js/app/` içindeki
+> dosyalar numara sırasıyla yüklenir (`01…20`) ve `20-boot.js` en sonda her şeyi bağlayıp başlatır.
+> Bu yüzden `index.html`'deki `<script>` sırası korunmalıdır.
 > Arayüz değişirse `assets/guide.jpg` yeniden alınmalıdır.
