@@ -9,6 +9,17 @@ açan, pastalı/kalıbı gösteren ve kesim makinesinin bıçak (ya da plotter k
 Kurulum gerekmez: `index.html` dosyasını tarayıcıda açmanız yeterlidir; internet bağlantısı da gerekmez.
 Seçtiğiniz `.CUT` dosyaları hiçbir sunucuya gönderilmez, tamamen tarayıcınızda okunur.
 
+## Lisans / License
+
+**© 2026 BIÇKIN (show.bickin.net). Tüm hakları saklıdır — All rights reserved.**
+
+Bu proje **özel (tescilli) yazılımdır**. Kaynak kodu yalnızca görüntüleme amacıyla bu depoda
+bulunur; telif hakkı sahibinin yazılı izni olmadan kopyalanamaz, değiştirilemez, dağıtılamaz veya
+başka bir üründe kullanılamaz. Ayrıntılar için [`LICENSE`](LICENSE) dosyasına bakın.
+
+> Not: Tamamen tarayıcıda çalışan bir sayfanın kodu teknik olarak gizlenemez; bu lisans kodun
+> izinsiz kullanımını **hukuken** yasaklar.
+
 ## Özellikler
 
 - Pastalın tamamı üstteki 200 px'lik önizlemede; parça adları, bedenleri ve sağ/sol bilgisi etiketlerde
