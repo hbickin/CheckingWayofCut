@@ -135,3 +135,22 @@ Repo ayarlarında **Settings → Pages → Build and deployment → Source: Depl
 dal olarak `main` ve klasör olarak `/ (root)` seçin. Birkaç dakika içinde site
 `https://hbickin.github.io/CheckingWayofCut/` adresinde yayında olur; `main` dalına
 yapılan her değişiklik siteyi otomatik günceller.
+
+## Dosya yapısı
+
+Önceden her şey tek `index.html` içindeydi; artık bölümlere ayrıldı (tarayıcıda yine aynı şekilde,
+sunucusuz çalışır — dosyaları aynı klasörde tutmanız yeterli):
+
+```
+index.html            # yalnızca sayfa iskeleti (HTML)
+css/styles.css        # tüm stiller
+js/i18n.js            # Türkçe / İngilizce çeviriler
+js/content.js         # versiyon geçmişi + kullanım kılavuzu metinleri
+js/app.js             # uygulama mantığı (okuyucular, simülasyon, nesting, arayüz)
+assets/favicon.svg    # sekme ikonu (BIÇKIN karakteri)
+assets/guide.jpg      # kullanım kılavuzundaki ekran görüntüsü
+sample/               # örnek .CUT / .PLT / .DXF dosyaları
+```
+
+> Komut dosyaları sırayla yüklenir: `i18n.js` ve `content.js` verileri hazırlar, `app.js` bunları kullanır.
+> Arayüz değişirse `assets/guide.jpg` yeniden alınmalıdır.
