@@ -1,6 +1,6 @@
 # Gerber Tech Cut File Reader — BIÇKIN
 
-Gerber Technology / RS-274X (ISO) kesim dosyalarını (`.CUT`) ve HPGL plot dosyalarını (`.PLT`) tarayıcıda
+Gerber Technology / RS-274X (ISO) kesim dosyalarını (`.CUT`), HPGL plot dosyalarını (`.PLT`) ve DXF çizimlerini (`.DXF`) tarayıcıda
 açan, pastalı/kalıbı gösteren ve kesim makinesinin bıçak (ya da plotter kaleminin) hareketini simüle eden
 **tek dosyalık** HTML uygulaması.
 
@@ -35,6 +35,28 @@ Desteklenen HPGL komutları: `IN`, `IP`, `SC` (ölçekleme), `SP` (araç), `PU`/
 `PA`/`PR` (mutlak/göreli), `LB` (etiket, `DT` sonlandırıcısıyla), `DI`/`DR` (yazı yönü), `SI` (yazı boyu),
 `LO` (yazı hizası). Plotter birimi 0,025 mm'dir. Her kalem/bıçak aşağı yol bir "yol" (Y1, Y2 …) olarak
 listelenir; kapalı konturlarda saat yönü / tersi, açık yollarda gri yön ikonları gösterilir.
+
+## DXF dosyaları
+
+ASCII DXF (AutoCAD R12 ve sonrası, ör. Gerber AccuMark'ın DXF çıktısı) okunur. Birim `$INSUNITS`'ten alınır
+(inç / mm / cm / m; yoksa mm kabul edilir). Desteklenen nesneler: `POLYLINE`, `LWPOLYLINE` (yay/bulge dahil),
+`LINE`, `ARC`, `CIRCLE`, `TEXT`, `MTEXT`. Her şeyi kapsayan dikdörtgen pastal çerçevesi sayılır; çerçeve
+dışındaki yazılar (`MK:`, `MODEL:`, `W=… L=…`) pastal bilgisi olarak İşlemler alanına yazılır. Kapalı konturlar
+parça (P1, P2 …), açık çizgiler iç çizgi (Y1, Y2 …) olur; parça içindeki yazılar sırasıyla parça adı, beden ve
+demet bilgisi olarak okunur. `T001…` katmanları araç numarasına (T1…) eşlenir.
+
+## Parça seçimi ve nesting
+
+**☰ Parçalar** düğmesi dosyadaki parçaları listeler:
+
+- **Birden çok parça** seçilince pastal yerine bu parçaların **nesting** yerleşimi gösterilir: parçalar büyükten
+  küçüğe, kumaş eni boyunca en sola kayabilecekleri satıra yerleştirilir (3 mm boşlukla, 5 mm satır çözünürlüğüyle).
+  **180° çevirmeye izin ver** işaretliyse her parça için iki yön denenir (çevirme düz boy ipliği yönünü korur).
+  Pastal şeridinde **NESTING** etiketi, toplam boy ve verim görünür; simülasyon yeni yerleşim üzerinde çalışır.
+- **Tek parça** seçilince pastalda o parça "Sadece bu parça" olarak seçilir.
+- Seçim temizlenince özgün pastala dönülür.
+
+CUT, PLT ve DXF dosyalarının hepsinde çalışır.
 
 ## Dil / Language
 

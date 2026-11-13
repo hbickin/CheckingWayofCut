@@ -88,6 +88,20 @@
   .progress { width: 160px; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
   .progress > div { height: 100%; width: 0; background: var(--ok); }
   .legend { display: inline-flex; gap: 10px; align-items: center; }
+  /* --- Parça seçimi / nesting --- */
+  .nest-wrap { position: relative; display: inline-flex; }
+  .popover {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; width: min(420px, calc(100vw - 32px));
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+  .popover[hidden] { display: none; }
+  .popover .muted { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+  .nest-actions { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .nest-list { max-height: 50vh; overflow-y: auto; border-top: 1px solid var(--border); padding-top: 4px; }
+  .nest-list label { display: flex; gap: 6px; align-items: center; padding: 3px 2px; cursor: pointer; font-size: 12px; }
+  .nest-list label:hover { background: var(--panel-2); }
+  .badge { background: #f97316; color: #fff; border-radius: 3px; padding: 1px 6px; font-weight: 700; font-size: 11px; }
   /* --- Dil seçimi ve geri bildirim --- */
   .toolbar-right { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; }
   .lang { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
@@ -193,7 +207,7 @@
   </div>
   <label class="btn primary" data-i18n-title="file.open.title">
     <span data-i18n="file.open">📂 Dosya Seç</span>
-    <input type="file" id="fileInput" accept=".cut,.CUT,.plt,.PLT,.hpgl,.hpg,.txt,*/*">
+    <input type="file" id="fileInput" accept=".cut,.CUT,.plt,.PLT,.hpgl,.hpg,.dxf,.DXF,.txt,*/*">
   </label>
   <label class="field" data-i18n-title="start.title">
     <span data-i18n="start">Başlangıç</span>
@@ -210,6 +224,18 @@
   <button class="btn" id="btnPause" disabled data-i18n="pause">⏸ Duraklat</button>
   <button class="btn" id="btnStop" disabled data-i18n="stop">⏹ Durdur</button>
   <button class="btn" id="btnReset" data-i18n="reset" data-i18n-title="reset.title">⟲ Reset</button>
+  <span class="nest-wrap">
+    <button class="btn" id="btnPieces" disabled data-i18n-title="nest.btn.title">☰ <span data-i18n="nest.btn">Parçalar</span> <b id="nestCount"></b></button>
+    <div class="popover" id="nestPanel" hidden>
+      <p class="muted" data-i18n="nest.hint"></p>
+      <div class="nest-actions">
+        <button type="button" class="linkbtn" id="nestAll" data-i18n="nest.all">Tümünü seç</button>
+        <button type="button" class="linkbtn" id="nestNone" data-i18n="nest.none">Temizle</button>
+        <label class="field"><input type="checkbox" id="nestRotate" checked> <span data-i18n="nest.rotate">180° çevirmeye izin ver</span></label>
+      </div>
+      <div class="nest-list" id="nestList"></div>
+    </div>
+  </span>
   <span class="sep"></span>
   <span id="fileName" data-i18n="file.none">Dosya seçilmedi</span>
   <span class="toolbar-right">
@@ -322,7 +348,7 @@
   var FEEDBACK_REPO = 'hbickin/CheckingWayofCut';
   var I18N = {
     tr: {
-      'file.open': '📂 Dosya Seç', 'file.open.title': 'Gerber / RS-274X kesim dosyası (.CUT) veya HPGL plot dosyası (.PLT) seç',
+      'file.open': '📂 Dosya Seç', 'file.open.title': 'Gerber / RS-274X kesim dosyası (.CUT), HPGL plot dosyası (.PLT) veya DXF çizim dosyası (.DXF) seç',
       'start': 'Başlangıç', 'start.title': 'Simülasyonun başlayacağı parça', 'start.all': 'Tümü (baştan)',
       'only': 'Sadece bu parça', 'only.title': 'İşaretliyse yalnızca seçilen parça kesilir; değilse seçilen parçadan pastal sonuna kadar devam edilir',
       'sim.start': '▶ Simüle Et', 'sim.resume': '▶ Devam Et', 'sim.again': '↻ Tekrar Simüle Et',
@@ -405,9 +431,9 @@
       'st.notch': 'ÇENTİK', 'st.up': 'YUKARIDA',
       'follow.offPreview': 'Bıçak takibi kapatıldı (önizlemeden konum seçildi).',
       'follow.offDrag': 'Bıçak takibi kapatıldı (görünüm elle kaydırıldı).',
-      'ph.preview': 'Kesim (.CUT) veya plot (.PLT) dosyası seçin — çizimin tamamı burada görünecek',
+      'ph.preview': 'Kesim (.CUT), plot (.PLT) veya DXF dosyası seçin — çizimin tamamı burada görünecek',
       'ph.sim': 'Dosya seçip "Simüle Et" ile bıçak hareketini izleyin',
-      'ready': 'Hazır. Gerber / RS-274X kesim dosyası (.CUT) veya HPGL plot dosyası (.PLT) seçin.',
+      'ready': 'Hazır. Gerber / RS-274X kesim (.CUT), HPGL plot (.PLT) veya DXF (.DXF) dosyası seçin.',
       'unexpected': 'Beklenmeyen hata: {msg}', 'lang.changed': 'Dil: Türkçe',
       'fb.btn': '💬 Geri Bildirim', 'fb.btn.title': 'Hata bildir ya da istek gönder (GitHub Issues)',
       'fb.heading': 'Geri bildirim gönder',
@@ -421,10 +447,25 @@
       'fb.blocked': 'Tarayıcı yeni sekmeyi engelledi; açılır pencerelere izin verip tekrar deneyin.',
       'fb.h.desc': 'Açıklama', 'fb.h.diag': 'Teknik bilgiler', 'fb.h.log': 'Son günlük satırları',
       'fb.k.file': 'Dosya', 'fb.k.format': 'Biçim', 'fb.k.lang': 'Dil', 'fb.k.browser': 'Tarayıcı', 'fb.k.page': 'Sayfa',
-      'fb.truncated': '(kısaltıldı)'
+      'fb.truncated': '(kısaltıldı)',
+      'p.dxfBad': 'Dosya okunabilir bir ASCII DXF dosyası değil (ikili DXF ya da bozuk grup kodları).',
+      'p.dxfNoEnt': 'DXF dosyasında ENTITIES bölümü bulunamadı.',
+      'p.dxfUnits': 'DXF birimi ($INSUNITS) belirtilmemiş ya da tanınmıyor; milimetre kabul edildi.',
+      'p.dxfUnsupported': 'DXF "{type}" nesnesi desteklenmiyor, atlandı.',
+      'p.dxfNoGeom': 'DXF dosyasında çizilecek çizgi (POLYLINE / LWPOLYLINE / LINE / ARC / CIRCLE) bulunamadı.',
+      'l.dxfLoaded': 'DXF dosyası yüklendi ({ms} ms): {pieces} parça, {lines} iç çizgi, {labels} yazı (birim: {unit}).',
+      'l.dxfHeader': 'Pastal bilgisi: {text}',
+      'nest.btn': 'Parçalar', 'nest.btn.title': 'Parça seç: birden çok parça seçilince pastal yerine nesting yerleşimi gösterilir',
+      'nest.hint': 'Birden çok parça seçince bu parçalar kumaş enine göre otomatik yerleştirilir (nesting). Tek parça seçilirse pastalda o parça gösterilir; seçimi temizleyince pastala dönülür.',
+      'nest.all': 'Tümünü seç', 'nest.none': 'Temizle', 'nest.rotate': '180° çevirmeye izin ver',
+      'nest.done': 'Nesting: {n} parça yerleştirildi — boy {len}, en {width}, verim %{util} ({ms} ms).',
+      'nest.oversize': '{piece} kumaş eninden ({width}) geniş; yine de yerleştirildi, taşma var.',
+      'nest.back': 'Seçim temizlendi; pastal görünümüne dönüldü.',
+      'nest.single': 'Tek parça seçildi: pastalda {piece} gösteriliyor.',
+      'nest.badge': 'NESTING', 'nest.util': 'Verim'
     },
     en: {
-      'file.open': '📂 Open File', 'file.open.title': 'Choose a Gerber / RS-274X cut file (.CUT) or an HPGL plot file (.PLT)',
+      'file.open': '📂 Open File', 'file.open.title': 'Choose a Gerber / RS-274X cut file (.CUT), an HPGL plot file (.PLT) or a DXF drawing (.DXF)',
       'start': 'Start from', 'start.title': 'Piece the simulation starts from', 'start.all': 'All (from the beginning)',
       'only': 'This piece only', 'only.title': 'If checked, only the selected piece is cut; otherwise cutting continues from it to the end of the marker',
       'sim.start': '▶ Simulate', 'sim.resume': '▶ Resume', 'sim.again': '↻ Simulate Again',
@@ -507,9 +548,9 @@
       'st.notch': 'NOTCH', 'st.up': 'UP',
       'follow.offPreview': 'Knife following turned off (position picked on the preview).',
       'follow.offDrag': 'Knife following turned off (view panned manually).',
-      'ph.preview': 'Choose a cut (.CUT) or plot (.PLT) file — the whole drawing will appear here',
+      'ph.preview': 'Choose a cut (.CUT), plot (.PLT) or DXF file — the whole drawing will appear here',
       'ph.sim': 'Choose a file and press "Simulate" to watch the knife move',
-      'ready': 'Ready. Choose a Gerber / RS-274X cut file (.CUT) or an HPGL plot file (.PLT).',
+      'ready': 'Ready. Choose a Gerber / RS-274X cut (.CUT), HPGL plot (.PLT) or DXF (.DXF) file.',
       'unexpected': 'Unexpected error: {msg}', 'lang.changed': 'Language: English',
       'fb.btn': '💬 Feedback', 'fb.btn.title': 'Report a bug or send a request (GitHub Issues)',
       'fb.heading': 'Send feedback',
@@ -523,7 +564,22 @@
       'fb.blocked': 'The browser blocked the new tab; allow pop-ups and try again.',
       'fb.h.desc': 'Description', 'fb.h.diag': 'Technical details', 'fb.h.log': 'Recent log lines',
       'fb.k.file': 'File', 'fb.k.format': 'Format', 'fb.k.lang': 'Language', 'fb.k.browser': 'Browser', 'fb.k.page': 'Page',
-      'fb.truncated': '(truncated)'
+      'fb.truncated': '(truncated)',
+      'p.dxfBad': 'The file is not a readable ASCII DXF file (binary DXF or broken group codes).',
+      'p.dxfNoEnt': 'No ENTITIES section was found in the DXF file.',
+      'p.dxfUnits': 'The DXF unit ($INSUNITS) is missing or unknown; millimetres were assumed.',
+      'p.dxfUnsupported': 'DXF "{type}" entity is not supported and was skipped.',
+      'p.dxfNoGeom': 'No drawable lines (POLYLINE / LWPOLYLINE / LINE / ARC / CIRCLE) were found in the DXF file.',
+      'l.dxfLoaded': 'DXF file loaded ({ms} ms): {pieces} pieces, {lines} internal lines, {labels} texts (unit: {unit}).',
+      'l.dxfHeader': 'Marker info: {text}',
+      'nest.btn': 'Pieces', 'nest.btn.title': 'Select pieces: with more than one piece selected, a nested layout is shown instead of the marker',
+      'nest.hint': 'When more than one piece is selected, they are placed automatically across the fabric width (nesting). With a single piece the marker shows that piece; clearing the selection returns to the marker.',
+      'nest.all': 'Select all', 'nest.none': 'Clear', 'nest.rotate': 'Allow 180° rotation',
+      'nest.done': 'Nesting: {n} pieces placed — length {len}, width {width}, utilization {util}% ({ms} ms).',
+      'nest.oversize': '{piece} is wider than the fabric ({width}); it was placed anyway and overflows.',
+      'nest.back': 'Selection cleared; back to the marker view.',
+      'nest.single': 'Single piece selected: showing {piece} on the marker.',
+      'nest.badge': 'NESTING', 'nest.util': 'Utilization'
     }
   };
   var lang = (function () {
@@ -554,7 +610,9 @@
     log: $('log'), logCounts: $('logCounts'), btnClearLog: $('btnClearLog'),
     toolList: $('toolList'), btnToolReset: $('btnToolReset'), btnFeedback: $('btnFeedback'),
     fbDialog: $('fbDialog'), fbType: $('fbType'), fbTitle: $('fbTitle'), fbBody: $('fbBody'),
-    fbDiag: $('fbDiag'), fbErr: $('fbErr'), fbSend: $('fbSend'), fbCancel: $('fbCancel')
+    fbDiag: $('fbDiag'), fbErr: $('fbErr'), fbSend: $('fbSend'), fbCancel: $('fbCancel'),
+    btnPieces: $('btnPieces'), nestPanel: $('nestPanel'), nestList: $('nestList'), nestCount: $('nestCount'),
+    nestAll: $('nestAll'), nestNone: $('nestNone'), nestRotate: $('nestRotate')
   };
 
   // ------------------------------------------------------------------
@@ -843,6 +901,285 @@
     return res;
   }
 
+  // ------------------------------------------------------------------
+  // DXF (ASCII, R12 ve sonrası) ayrıştırıcı
+  // ------------------------------------------------------------------
+  // İç birim 0,1 mm; DXF koordinatları $INSUNITS'e göre çevrilir
+  var DXF_UNIT_MM = 0.1;
+  var DXF_UNITS = { 1: { mm: 25.4, name: 'inch' }, 2: { mm: 304.8, name: 'ft' }, 4: { mm: 1, name: 'mm' }, 5: { mm: 10, name: 'cm' }, 6: { mm: 1000, name: 'm' } };
+  var DXF_SKIP = { SEQEND: 1, ATTRIB: 1, ATTDEF: 1, VIEWPORT: 1 };
+
+  function isDxf(text, name) {
+    if (/\.dxf$/i.test(name || '')) return true;
+    return /^\s*(999|0)\s*\r?\n/.test(text) && /\n\s*SECTION\s*\r?\n/.test(text.slice(0, 4000));
+  }
+
+  function polyArea(pts) {
+    var a = 0;
+    for (var i = 0, n = pts.length; i < n; i++) { var p = pts[i], q = pts[(i + 1) % n]; a += p[0] * q[1] - q[0] * p[1]; }
+    return a / 2;
+  }
+  function pointInPoly(x, y, pts) {
+    var inside = false;
+    for (var i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      var xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  function parseDxf(text) {
+    var res = {
+      format: 'dxf', segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
+      unitMm: DXF_UNIT_MM, feed: null, warnings: [], errors: [], ended: true, labels: [], tools: {}, header: [], unitName: 'mm'
+    };
+    var warnOnce = {};
+    function warn(key, msg) {
+      if (warnOnce[key]) { warnOnce[key].n++; return; }
+      warnOnce[key] = { n: 1, msg: msg };
+    }
+    text = text.replace(/^﻿/, '');
+    if (!text.trim()) { res.errors.push(L('p.empty')); return res; }
+    if (/^AutoCAD Binary DXF/.test(text)) { res.errors.push(L('p.dxfBad')); return res; }
+
+    var lines = text.split(/\r?\n/), pairs = [];
+    for (var i = 0; i + 1 < lines.length; i += 2) {
+      var code = parseInt(lines[i], 10);
+      if (isNaN(code)) { if (lines[i].trim() === '' && i + 1 >= lines.length - 1) break; res.errors.push(L('p.dxfBad')); return res; }
+      pairs.push([code, lines[i + 1].replace(/\s+$/, '')]);
+    }
+
+    // Birim
+    var insUnits = 0;
+    for (i = 0; i < pairs.length - 1; i++) {
+      if (pairs[i][0] === 9 && pairs[i][1].trim() === '$INSUNITS') { insUnits = parseInt(pairs[i + 1][1], 10); break; }
+    }
+    var unit = DXF_UNITS[insUnits];
+    if (!unit) { unit = DXF_UNITS[4]; res.warnings.push(L('p.dxfUnits')); }
+    res.unitName = unit.name;
+    var k = unit.mm / DXF_UNIT_MM;
+
+    // ENTITIES bölümünü nesnelere ayır
+    var start = -1;
+    for (i = 0; i < pairs.length - 1; i++) {
+      if (pairs[i][0] === 0 && pairs[i][1].trim() === 'SECTION' && pairs[i + 1][0] === 2 && pairs[i + 1][1].trim() === 'ENTITIES') { start = i + 2; break; }
+    }
+    if (start < 0) { res.errors.push(L('p.dxfNoEnt')); return res; }
+    var ents = [], cur = null;
+    for (i = start; i < pairs.length; i++) {
+      var pr = pairs[i];
+      if (pr[0] === 0) {
+        var t = pr[1].trim();
+        if (t === 'ENDSEC' || t === 'EOF') break;
+        cur = { type: t, g: [] }; ents.push(cur);
+      } else if (cur) cur.g.push(pr);
+    }
+    function gv(e, code, def) {
+      for (var j = 0; j < e.g.length; j++) if (e.g[j][0] === code) { var v = parseFloat(e.g[j][1]); return isNaN(v) ? def : v; }
+      return def;
+    }
+    function gs(e, code) {
+      for (var j = 0; j < e.g.length; j++) if (e.g[j][0] === code) return e.g[j][1];
+      return undefined;
+    }
+    function toolOf(layer) {
+      var m = /^T0*(\d+)/i.exec((layer || '').trim());
+      var t = m ? Number(m[1]) : 1;
+      return t >= 1 && t <= TOOL_COUNT ? t : 1;
+    }
+    // Yay (bulge) noktaları: p0'dan p1'e, bulge = tan(açı/4)
+    function bulgePts(out, x0, y0, x1, y1, b) {
+      var dx = x1 - x0, dy = y1 - y0, d = Math.hypot(dx, dy);
+      if (!b || !d) { out.push([x1, y1]); return; }
+      var th = 4 * Math.atan(b), off = (d / 2) / Math.tan(th / 2);
+      var cx = (x0 + x1) / 2 - dy / d * off, cy = (y0 + y1) / 2 + dx / d * off;
+      var r = Math.hypot(x0 - cx, y0 - cy), a0 = Math.atan2(y0 - cy, x0 - cx);
+      var n = Math.max(2, Math.ceil(Math.abs(th) / (Math.PI / 24)));
+      for (var q = 1; q < n; q++) { var a = a0 + th * q / n; out.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+      out.push([x1, y1]);
+    }
+    function arcPts(cx, cy, r, a0, a1) {
+      var out = [], sweep = a1 - a0;
+      var n = Math.max(4, Math.ceil(Math.abs(sweep) / (Math.PI / 36)));
+      for (var q = 0; q <= n; q++) { var a = a0 + sweep * q / n; out.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+      return out;
+    }
+
+    var paths = [], texts = [];
+    function addPath(pts, closed, layer) {
+      if (pts.length < 2) return;
+      if (closed) { var f = pts[0], l = pts[pts.length - 1]; if (f[0] !== l[0] || f[1] !== l[1]) pts.push([f[0], f[1]]); }
+      paths.push({ pts: pts, tool: toolOf(layer) });
+    }
+    function verticesToPts(vs, closed) {
+      var pts = [[vs[0].x, vs[0].y]];
+      var n = vs.length, last = closed ? n : n - 1;
+      for (var q = 0; q < last; q++) {
+        var a = vs[q], b = vs[(q + 1) % n];
+        bulgePts(pts, a.x, a.y, b.x, b.y, a.b);
+      }
+      return pts;
+    }
+
+    for (i = 0; i < ents.length; i++) {
+      var e = ents[i], layer = gs(e, 8);
+      switch (e.type) {
+        case 'POLYLINE': {
+          var closedPl = (gv(e, 70, 0) & 1) === 1, vs = [];
+          while (i + 1 < ents.length && ents[i + 1].type === 'VERTEX') {
+            i++;
+            var ve = ents[i];
+            if (gv(ve, 70, 0) & 16) continue;                 // spline çerçeve noktası
+            vs.push({ x: gv(ve, 10, 0), y: gv(ve, 20, 0), b: gv(ve, 42, 0) });
+          }
+          if (vs.length >= 2) addPath(verticesToPts(vs, closedPl), closedPl, layer);
+          break;
+        }
+        case 'LWPOLYLINE': {
+          var lv = [], vcur = null;
+          e.g.forEach(function (g) {
+            if (g[0] === 10) { vcur = { x: parseFloat(g[1]), y: 0, b: 0 }; lv.push(vcur); }
+            else if (g[0] === 20 && vcur) vcur.y = parseFloat(g[1]);
+            else if (g[0] === 42 && vcur) vcur.b = parseFloat(g[1]);
+          });
+          var closedLw = (gv(e, 70, 0) & 1) === 1;
+          if (lv.length >= 2) addPath(verticesToPts(lv, closedLw), closedLw, layer);
+          break;
+        }
+        case 'LINE':
+          addPath([[gv(e, 10, 0), gv(e, 20, 0)], [gv(e, 11, 0), gv(e, 21, 0)]], false, layer);
+          break;
+        case 'ARC': {
+          var a0 = gv(e, 50, 0) * Math.PI / 180, a1 = gv(e, 51, 0) * Math.PI / 180;
+          if (a1 <= a0) a1 += Math.PI * 2;
+          addPath(arcPts(gv(e, 10, 0), gv(e, 20, 0), gv(e, 40, 0), a0, a1), false, layer);
+          break;
+        }
+        case 'CIRCLE':
+          addPath(arcPts(gv(e, 10, 0), gv(e, 20, 0), gv(e, 40, 0), 0, Math.PI * 2), true, layer);
+          break;
+        case 'TEXT': case 'MTEXT': {
+          var str = gs(e, 1) || '';
+          if (e.type === 'MTEXT') {
+            str = e.g.filter(function (g) { return g[0] === 3; }).map(function (g) { return g[1]; }).join('') + str;
+            str = str.replace(/\\P/g, ' ').replace(/\\[A-Za-z][^;]*;/g, '').replace(/[{}]/g, '');
+          }
+          if (!str.trim()) break;
+          var h72 = gv(e, 72, 0), v73 = gv(e, 73, 0), hIdx = 0, vIdx = 0;
+          var tx = gv(e, 10, 0), ty = gv(e, 20, 0);
+          if (e.type === 'TEXT') {
+            if ((h72 || v73) && gs(e, 11) !== undefined) { tx = gv(e, 11, tx); ty = gv(e, 21, ty); }
+            hIdx = h72 === 1 || h72 === 4 ? 1 : h72 === 2 ? 2 : 0;
+            vIdx = h72 === 4 ? 1 : v73 === 2 ? 1 : v73 === 3 ? 2 : 0;
+          } else {
+            var att = gv(e, 71, 7);                          // 1 sol üst … 9 sağ alt
+            hIdx = (att - 1) % 3; vIdx = 2 - Math.floor((att - 1) / 3);
+          }
+          texts.push({ x: tx, y: ty, text: str, h: gv(e, 40, 2.5), ang: gv(e, 50, 0) * Math.PI / 180,
+            lo: hIdx * 3 + vIdx + 1, tool: toolOf(layer) });
+          break;
+        }
+        default:
+          if (!DXF_SKIP[e.type] && e.type !== 'VERTEX') warn('ent' + e.type, L('p.dxfUnsupported', { type: e.type }));
+      }
+    }
+
+    if (!paths.length) {
+      Object.keys(warnOnce).forEach(function (kk) { res.warnings.push(warnOnce[kk].msg); });
+      res.errors.push(L('p.dxfNoGeom')); return res;
+    }
+
+    // Dosya birimi → iç birim
+    paths.forEach(function (pp) { pp.pts = pp.pts.map(function (q) { return [q[0] * k, q[1] * k]; }); });
+    texts.forEach(function (tt) { tt.x *= k; tt.y *= k; tt.h *= k; });
+
+    // Pastal çerçevesi: diğer her şeyi kapsayan eksene paralel en büyük dikdörtgen
+    var border = null, bArea = 0;
+    paths.forEach(function (pp, idx) {
+      var q = pp.pts;
+      if (q.length < 4 || q.length > 5) return;
+      var xs = q.map(function (v) { return v[0]; }), ys = q.map(function (v) { return v[1]; });
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+      var axis = q.every(function (v) { return (Math.abs(v[0] - x0) < 1 || Math.abs(v[0] - x1) < 1) && (Math.abs(v[1] - y0) < 1 || Math.abs(v[1] - y1) < 1); });
+      if (axis && (x1 - x0) * (y1 - y0) > bArea) { bArea = (x1 - x0) * (y1 - y0); border = { idx: idx, x0: x0, y0: y0, x1: x1, y1: y1 }; }
+    });
+    if (border) {
+      var tol = 0.01 * Math.max(border.x1 - border.x0, border.y1 - border.y0);
+      var fits = paths.every(function (pp, idx) {
+        return idx === border.idx || pp.pts.every(function (v) {
+          return v[0] >= border.x0 - tol && v[0] <= border.x1 + tol && v[1] >= border.y0 - tol && v[1] <= border.y1 + tol;
+        });
+      });
+      if (fits && paths.length > 1) paths.splice(border.idx, 1); else border = null;
+    }
+
+    // Kaydırma: çerçevenin (yoksa geometrinin) sol alt köşesi (0,0) olsun
+    var ox = Infinity, oy = Infinity, mx = -Infinity, my = -Infinity;
+    if (border) { ox = border.x0; oy = border.y0; mx = border.x1; my = border.y1; }
+    else paths.forEach(function (pp) { pp.pts.forEach(function (v) { ox = Math.min(ox, v[0]); oy = Math.min(oy, v[1]); mx = Math.max(mx, v[0]); my = Math.max(my, v[1]); }); });
+    paths.forEach(function (pp) { pp.pts.forEach(function (v) { v[0] -= ox; v[1] -= oy; }); });
+    texts.forEach(function (tt) { tt.x -= ox; tt.y -= oy; });
+    var W = mx - ox, H = my - oy;
+    var margin = border ? 0 : 5 / DXF_UNIT_MM;
+    res.bounds = { w: W + margin, h: H + margin };
+
+    // Çerçeve dışındaki yazılar pastal bilgisidir (MK:, MODEL:, W=… L=…)
+    texts.forEach(function (tt) {
+      if (border && (tt.x < -1 || tt.x > W + 1 || tt.y < -1 || tt.y > H + 1)) {
+        res.header.push(tt.text);
+        var mk = /^MK:\s*(.+)$/.exec(tt.text.trim());
+        if (mk) res.info['Marker Name'] = mk[1];
+      } else res.labels.push(tt);
+    });
+    if (res.header.length) res.message = res.header.join(' | ');
+
+    // Yollar → hareketler; kapalı olanlar parça (P), açık olanlar iç çizgi (Y)
+    var x = 0, y = 0, closeTol = 0.5 / DXF_UNIT_MM, nP = 0, nY = 0;
+    paths.forEach(function (pp, idx) {
+      var id = idx + 1, q = pp.pts;
+      var first = q[0], last = q[q.length - 1];
+      var closed = q.length >= 4 && Math.hypot(first[0] - last[0], first[1] - last[1]) <= closeTol;
+      // Görünen numara: parçalar P1, P2 …; iç çizgiler Y1, Y2 … (iç kimlik dosya sırasıdır)
+      var pc = { id: id, num: closed ? ++nP : ++nY, code: closed ? 'P' : 'Y', tool: pp.tool, minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity,
+        attrs: {}, cutLen: 0, firstSeg: -1, lastSeg: -1, closed: closed, poly: closed ? q : null };
+      res.pieces[id] = pc; res.pieceOrder.push(id);
+      res.tools[pp.tool] = (res.tools[pp.tool] || 0) + 1;
+      if (x !== first[0] || y !== first[1]) {
+        res.segments.push({ x0: x, y0: y, x1: first[0], y1: first[1], len: Math.hypot(first[0] - x, first[1] - y), type: 'move', piece: id, tool: pp.tool });
+      }
+      for (var q2 = 1; q2 < q.length; q2++) {
+        var a = q[q2 - 1], b = q[q2], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (!len) continue;
+        res.segments.push({ x0: a[0], y0: a[1], x1: b[0], y1: b[1], len: len, type: 'cut', piece: id, tool: pp.tool });
+        pc.minX = Math.min(pc.minX, a[0], b[0]); pc.maxX = Math.max(pc.maxX, a[0], b[0]);
+        pc.minY = Math.min(pc.minY, a[1], b[1]); pc.maxY = Math.max(pc.maxY, a[1], b[1]);
+        pc.cutLen += len;
+        if (pc.firstSeg < 0) pc.firstSeg = res.segments.length - 1;
+        pc.lastSeg = res.segments.length - 1;
+      }
+      x = last[0]; y = last[1];
+    });
+
+    // Parça içindeki yazılar sırasıyla parça adı, beden ve demet bilgisidir
+    var keys = ['PIECE NAME', 'PIECE SIZE', 'BUNDLE ID'];
+    var closedPieces = res.pieceOrder.map(function (id) { return res.pieces[id]; }).filter(function (pc) { return pc.closed; });
+    res.labels.forEach(function (tt) {
+      for (var c = 0; c < closedPieces.length; c++) {
+        var pc = closedPieces[c];
+        if (tt.x < pc.minX || tt.x > pc.maxX || tt.y < pc.minY || tt.y > pc.maxY || !pointInPoly(tt.x, tt.y, pc.poly)) continue;
+        var n = Object.keys(pc.attrs).length;
+        if (n < keys.length) pc.attrs[keys[n]] = tt.text.trim();
+        break;
+      }
+    });
+
+    Object.keys(warnOnce).forEach(function (kk) {
+      var w = warnOnce[kk];
+      res.warnings.push(w.msg + (w.n > 1 ? L('p.times', { n: w.n }) : ''));
+    });
+    return res;
+  }
+
   function parseCut(text) {
     var res = {
       format: 'cut', segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
@@ -1094,7 +1431,7 @@
       var t0 = performance.now();
       var res;
       var text = String(reader.result);
-      try { res = isPlt(text, fname) ? parsePlt(text) : parseCut(text); }
+      try { res = isDxf(text, fname) ? parseDxf(text) : isPlt(text, fname) ? parsePlt(text) : parseCut(text); }
       catch (e) { log('error', L('l.parseErr', { msg: e.message })); return; }
       res.warnings.forEach(function (w) { log('warn', w); });
       if (res.errors.length) {
@@ -1103,9 +1440,10 @@
         setData(null);
         return;
       }
-      if (res.format === 'plt') res.info['Marker Name'] = fname.replace(/\.[^.]+$/, '');
+      if (res.format !== 'cut' && !res.info['Marker Name']) res.info['Marker Name'] = fname.replace(/\.[^.]+$/, '');
       setData(res);
       if (res.format === 'plt') { logPltSummary(res, performance.now() - t0); return; }
+      if (res.format === 'dxf') { logDxfSummary(res, performance.now() - t0); return; }
       var cutCount = 0, cutLen = 0, moveLen = 0, notches = 0;
       res.segments.forEach(function (s) {
         if (s.type === 'move') moveLen += s.len;
@@ -1138,7 +1476,28 @@
     log('info', L('l.pltDirs', { cw: cw, ccw: ccw, open: open }));
   }
 
+  function logDxfSummary(res, ms) {
+    var cutLen = 0, moveLen = 0, pieces = 0, lines = 0;
+    res.segments.forEach(function (s) { if (s.type === 'move') moveLen += s.len; else cutLen += s.len; });
+    res.pieceOrder.forEach(function (id) { if (res.pieces[id].closed) pieces++; else lines++; });
+    log('ok', L('l.dxfLoaded', { ms: Math.round(ms), pieces: pieces, lines: lines, labels: res.labels.length, unit: res.unitName }));
+    res.header.forEach(function (h) { log('info', L('l.dxfHeader', { text: h })); });
+    log('info', L('l.pltLengths', { cut: fmtLen(cutLen), move: fmtLen(moveLen), time: fmtTime(totalTime), speed: speedMm() }));
+    var cw = 0, ccw = 0, open = 0;
+    res.pieceOrder.forEach(function (id) { var d = res.pieces[id].dir; if (d === 'cw') cw++; else if (d === 'ccw') ccw++; else open++; });
+    log('info', L('l.pltDirs', { cw: cw, ccw: ccw, open: open }));
+  }
+
+  // Dosyadan okunan özgün veri; "data" ise ekranda gösterilen (özgün ya da nesting) veridir
+  var source = null;
   function setData(res) {
+    source = res;
+    nestSel = {};
+    buildNestList();
+    showData(res);
+  }
+
+  function showData(res) {
     data = res;
     sim = newSim();
     paths = null; done = null; previewCache = null;
@@ -1167,9 +1526,19 @@
       if (i['Marker Name']) bits.push('<b>' + esc(i['Marker Name']) + '</b>');
       bits.push(L('m.length') + ': <b>' + fmtLen(b.w) + '</b>');
       bits.push(L('m.width') + ': <b>' + fmtLen(b.h) + '</b>');
+      if (data.nested) {
+        bits.unshift('<span class="badge">' + L('nest.badge') + '</span>');
+        bits.push(L('m.pieces') + ': <b>' + data.nestStats.count + '</b>');
+        bits.push(L('nest.util') + ': <b>' + (lang === 'tr' ? '%' + num(data.nestStats.util, 1) : num(data.nestStats.util, 1) + '%') + '</b>');
+        els.markerInfo.innerHTML = bits.join(' &nbsp;·&nbsp; ');
+        return;
+      }
       if (data.format === 'plt') {
         bits.push(L('m.format') + ': <b>HPGL (PLT)</b>');
         bits.push(L('m.paths') + ': <b>' + data.pieceOrder.length + '</b>');
+      } else if (data.format === 'dxf') {
+        bits.push(L('m.format') + ': <b>DXF</b>');
+        bits.push(L('m.pieces') + ': <b>' + data.pieceOrder.filter(function (id) { return data.pieces[id].closed; }).length + '</b>');
       } else {
         bits.push(L('m.pieces') + ': <b>' + data.pieceOrder.length + '</b>');
       }
@@ -1187,7 +1556,7 @@
   function buildPaths() {
     paths = { ghost: new Path2D(), notch: new Path2D(), fills: {}, tools: {} };
     var lastPiece = null, poly = null;
-    var plt = data.format === 'plt';
+    var plt = toolFmt();
     data.segments.forEach(function (s) {
       if (s.type === 'move') return;
       if (plt) {
@@ -1285,7 +1654,7 @@
     done = { cut: new Path2D(), notch: new Path2D(), move: new Path2D(), tools: {} };
   }
   function appendDone(s) {
-    var p = data.format === 'plt' && s.type !== 'move'
+    var p = toolFmt() && s.type !== 'move'
       ? (done.tools[s.tool] || (done.tools[s.tool] = new Path2D()))
       : done[s.type];
     p.moveTo(s.x0, s.y0); p.lineTo(s.x1, s.y1);
@@ -1355,7 +1724,7 @@
 
   els.btnReset.addEventListener('click', function () {
     sim.running = false;
-    data = null;
+    data = null; source = null;
     els.speed.value = 500;
     els.follow.checked = true;
     els.onlyPiece.checked = false;
@@ -1468,18 +1837,19 @@
     lastPieceLogged = id;
     var p = data.pieces[id];
     if (!p) return;
-    var plt = data.format === 'plt';
+    var plt = p.code === 'Y';
     log('info', L(plt ? (p.tool === 1 ? 'sim.pathDraw' : 'sim.pathCut') : 'sim.pieceCut', {
       i: data.pieceOrder.indexOf(id) + 1, n: data.pieceOrder.length, label: pieceLabel(p),
       dir: p.dir ? ' (' + dirText(p) + ')' : '' }));
   }
 
   function pieceLabel(p) {
-    var a = p.attrs, parts = [(p.code || 'N') + p.id];
+    var a = p.attrs, parts = [(p.code || 'N') + (p.num || p.id)];
     if (p.code === 'Y') parts.push(toolName(p.tool));
     if (a['PIECE NAME']) parts.push(a['PIECE NAME']);
     if (a['PIECE SIZE']) parts.push(L('size', { s: a['PIECE SIZE'] }));
     if (a['LEFT/RIGHT']) parts.push(a['LEFT/RIGHT']);
+    if (p.code === 'P' && a['BUNDLE ID']) parts.push(a['BUNDLE ID']);
     if (p.dir && p.dir !== 'open') parts.push(p.dir === 'cw' ? '↻' : '↺');
     return parts.join(' · ');
   }
@@ -1510,7 +1880,7 @@
     }
     var active = sim.started;
     var down = active && !sim.finished && k.down;
-    if (data.format === 'plt') {
+    if (toolFmt()) {
       var t = k.seg.tool, isPen = t === 1;
       els.knifeState.textContent = toolName(t) + ': ' + L(down ? (isPen ? 'st.downDraw' : 'st.downCut') : 'st.up');
       els.knifeDot.style.background = down ? toolColor(t) : COLORS.knifeUp;
@@ -1580,7 +1950,7 @@
 
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.lineWidth = opts.ghostWidth / s;
-    if (data.format === 'plt') {
+    if (toolFmt()) {
       // Henüz yapılmamış yollar araç renginde, soluk
       ctx.globalAlpha = 0.45;
       Object.keys(paths.tools).forEach(function (t) { ctx.strokeStyle = toolColor(Number(t)); ctx.stroke(paths.tools[t]); });
@@ -1588,6 +1958,12 @@
       return;
     }
     ctx.strokeStyle = COLORS.ghost; ctx.stroke(paths.ghost); ctx.stroke(paths.notch);
+  }
+
+  // DXF parça yazıları ekranda okunabilir boyuttaysa (≥ 5 px) dosyanın kendi yazıları gösterilir
+  function dxfTextVisible(s) {
+    var l = data.labels && data.labels[0];
+    return !!l && l.h * s >= 5;
   }
 
   // PLT etiketleri (LB): araç renginde, DI yönü, SI boyu ve LO hizalamasıyla; ekran koordinatlarında
@@ -1626,7 +2002,7 @@
       if (sg.type === 'move') { ctx.setLineDash([6 / s, 5 / s]); ctx.lineWidth = 1 / s; ctx.strokeStyle = COLORS.move; }
       else {
         ctx.lineWidth = cutWidth / s;
-        ctx.strokeStyle = data.format === 'plt' ? toolColor(sg.tool) : sg.type === 'notch' ? COLORS.notch : COLORS.cut;
+        ctx.strokeStyle = toolFmt() ? toolColor(sg.tool) : sg.type === 'notch' ? COLORS.notch : COLORS.cut;
       }
       ctx.stroke(); ctx.setLineDash([]);
     }
@@ -1668,7 +2044,7 @@
     }
     if (k && sim.started) {
       ctx.beginPath(); ctx.arc(ox + k.x * s, oy - k.y * s, 4, 0, Math.PI * 2);
-      ctx.fillStyle = k.down && !sim.finished ? (data.format === 'plt' ? toolColor(k.seg.tool) : COLORS.knifeDown) : COLORS.knifeUp; ctx.fill();
+      ctx.fillStyle = k.down && !sim.finished ? (toolFmt() ? toolColor(k.seg.tool) : COLORS.knifeDown) : COLORS.knifeUp; ctx.fill();
     }
   }
 
@@ -1690,7 +2066,7 @@
     // Kumaş eni ekranın yüksekliğine sığsın; pastal kısaysa tamamı sığsın
     cam.s = (h - 30) / b.h;
     // PLT çizimleri genelde tek parça/kalıptır: tamamı ekrana sığsın
-    if (data.format === 'plt') cam.s = Math.min(cam.s, (w - 30) / b.w);
+    if (data.format === 'plt' && !data.nested) cam.s = Math.min(cam.s, (w - 30) / b.w);
     cam.y = b.h / 2;
     var k = knifePos();
     cam.x = (sim.started || sim.start > 0) && k ? k.x : Math.min(b.w / 2, w / 2 / cam.s);
@@ -1726,19 +2102,21 @@
     // Parça etiketleri (PLT'de dosyanın kendi LB etiketleri çizilir)
     ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
     var fs = Math.max(10, Math.min(14, s * 25));
-    if (data.format === 'plt') drawPltLabels(ctx, d, s, ox, oy);
-    else {
+    if (toolFmt()) drawPltLabels(ctx, d, s, ox, oy);
+    // CUT ve DXF parçalarında ad/beden etiketi parçanın ortasına yazılır (DXF yazıları okunamayacak kadar küçükse)
+    if (data.format === 'cut' || data.format === 'dxf') {
       ctx.font = fs + 'px "Segoe UI", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = COLORS.label;
       data.pieceOrder.forEach(function (id) {
         var p = data.pieces[id];
-        if (!isFinite(p.minX)) return;
+        if (!isFinite(p.minX) || p.code === 'Y') return;
+        if (data.format === 'dxf' && p.attrs && dxfTextVisible(s)) return;
         var cx = ox + (p.minX + p.maxX) / 2 * s, cy = oy - (p.minY + p.maxY) / 2 * s;
         if (cx < -100 || cx > d.w + 100 || cy < -20 || cy > d.h + 20) return;
         var pw = (p.maxX - p.minX) * s;
         if (pw < 45) return;
         var a = p.attrs;
-        ctx.fillText('N' + id + (a['PIECE SIZE'] ? ' · ' + a['PIECE SIZE'] : '') + (p.dir ? (p.dir === 'cw' ? ' ↻' : ' ↺') : ''), cx, cy - fs * 0.6);
+        ctx.fillText((p.code || 'N') + (p.num || id) + (a['PIECE SIZE'] ? ' · ' + a['PIECE SIZE'] : '') + (p.dir ? (p.dir === 'cw' ? ' ↻' : ' ↺') : ''), cx, cy - fs * 0.6);
         if (a['PIECE NAME'] && pw > 80) {
           ctx.globalAlpha = 0.75; ctx.fillText(a['PIECE NAME'], cx, cy + fs * 0.6); ctx.globalAlpha = 1;
         }
@@ -1751,7 +2129,7 @@
     if (k && active) {
       var kx = ox + k.x * s, ky = oy - k.y * s;
       var down = k.down && !sim.finished;
-      var col = down ? (data.format === 'plt' ? toolColor(k.seg.tool) : COLORS.knifeDown) : COLORS.knifeUp;
+      var col = down ? (toolFmt() ? toolColor(k.seg.tool) : COLORS.knifeDown) : COLORS.knifeUp;
       ctx.save();
       ctx.translate(kx, ky); ctx.rotate(-k.dir);
       ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-6, -5); ctx.lineTo(-6, 5); ctx.closePath();
@@ -1826,6 +2204,228 @@
   });
 
   // ------------------------------------------------------------------
+  // Parça seçimi ve nesting
+  // ------------------------------------------------------------------
+  var NEST_GAP_MM = 3;        // parçalar arası boşluk
+  var NEST_ROW_MM = 5;        // yerleştirme ızgarasının satır yüksekliği
+  var nestSel = {};
+  var toolFmt = function () { return data && data.format !== 'cut'; };
+
+  // Yerleştirilebilir birimler: kapalı kontur (CUT'ta her parça) + içindeki açık çizgiler ve yazılar
+  function unitsOf(src) {
+    if (src._units) return src._units;
+    var units = [], byId = {};
+    src.pieceOrder.forEach(function (id) {
+      var p = src.pieces[id];
+      if (p.firstSeg < 0 || (src.format !== 'cut' && !p.closed)) return;
+      var poly = [];
+      for (var i = p.firstSeg; i <= p.lastSeg; i++) {
+        var sg = src.segments[i];
+        if (sg.piece !== p.id || sg.type !== 'cut') continue;
+        if (!poly.length) poly.push([sg.x0, sg.y0]);
+        poly.push([sg.x1, sg.y1]);
+      }
+      if (poly.length < 3) return;
+      var u = { id: p.id, poly: poly, members: [p.id], labels: [], area: Math.abs(polyArea(poly)),
+        minX: p.minX, maxX: p.maxX, minY: p.minY, maxY: p.maxY };
+      units.push(u); byId[p.id] = u;
+    });
+    function host(x, y) {
+      for (var c = 0; c < units.length; c++) {
+        var u = units[c];
+        if (x >= u.minX && x <= u.maxX && y >= u.minY && y <= u.maxY && pointInPoly(x, y, u.poly)) return u;
+      }
+      return null;
+    }
+    if (src.format !== 'cut') src.pieceOrder.forEach(function (id) {
+      var p = src.pieces[id];
+      if (byId[id] || p.firstSeg < 0) return;
+      var sg = src.segments[p.firstSeg], h = host((sg.x0 + sg.x1) / 2, (sg.y0 + sg.y1) / 2);
+      if (h) h.members.push(p.id);
+    });
+    (src.labels || []).forEach(function (l, li) { var h = host(l.x, l.y); if (h) h.labels.push(li); });
+    src._units = units;
+    return units;
+  }
+
+  // Satır profili: her satırda parçanın en sol / en sağ x'i (yerel koordinat, sol alt köşe 0,0)
+  function rowProfile(poly, rowU) {
+    var minX = Infinity, minY = Infinity, maxY = -Infinity;
+    poly.forEach(function (q) { minX = Math.min(minX, q[0]); minY = Math.min(minY, q[1]); maxY = Math.max(maxY, q[1]); });
+    var rows = Math.max(1, Math.ceil((maxY - minY) / rowU - 1e-9));
+    var Lp = new Float64Array(rows).fill(Infinity), Rp = new Float64Array(rows).fill(-Infinity);
+    function upd(r, xv) { if (r < 0) r = 0; if (r >= rows) r = rows - 1; if (xv < Lp[r]) Lp[r] = xv; if (xv > Rp[r]) Rp[r] = xv; }
+    for (var i = 0; i < poly.length - 1; i++) {
+      var ax = poly[i][0] - minX, ay = poly[i][1] - minY, bx = poly[i + 1][0] - minX, by = poly[i + 1][1] - minY;
+      var r0 = Math.floor(Math.min(ay, by) / rowU), r1 = Math.floor(Math.max(ay, by) / rowU);
+      upd(Math.floor(ay / rowU), ax); upd(Math.floor(by / rowU), bx);
+      for (var r = r0; r <= r1; r++) {
+        var lo = Math.max(r * rowU, Math.min(ay, by)), hi = Math.min((r + 1) * rowU, Math.max(ay, by));
+        if (ay === by) continue;
+        upd(r, ax + (bx - ax) * (lo - ay) / (by - ay));
+        upd(r, ax + (bx - ax) * (hi - ay) / (by - ay));
+      }
+    }
+    for (var r2 = 0; r2 < rows; r2++) if (!isFinite(Lp[r2])) { Lp[r2] = Infinity; Rp[r2] = -Infinity; }
+    return { rows: rows, L: Lp, R: Rp, minX: minX, minY: minY };
+  }
+
+  // Sol-alt "kaydırma" yerleşimi: her parça kumaş eni boyunca en solda duracağı satıra konur
+  function nestData(src, ids, allowRotate) {
+    var t0 = performance.now();
+    var unitMm = src.unitMm, rowU = NEST_ROW_MM / unitMm, gap = NEST_GAP_MM / unitMm;
+    var H = src.bounds.h, nRows = Math.max(1, Math.floor(H / rowU));
+    var frontier = new Float64Array(nRows);
+    var byId = {};
+    unitsOf(src).forEach(function (u) { byId[u.id] = u; });
+    var units = ids.map(function (id) { return byId[id]; }).filter(Boolean)
+      .sort(function (a, b) { return b.area - a.area; });
+    var warnings = [];
+
+    var placed = units.map(function (u) {
+      var cx = (u.minX + u.maxX) / 2, cy = (u.minY + u.maxY) / 2;
+      var best = null;
+      (allowRotate ? [false, true] : [false]).forEach(function (rot) {
+        var poly = rot ? u.poly.map(function (q) { return [2 * cx - q[0], 2 * cy - q[1]]; }) : u.poly;
+        var pf = rowProfile(poly, rowU);
+        var span = Math.min(pf.rows, nRows), maxB = Math.max(0, nRows - pf.rows);
+        for (var b = 0; b <= maxB; b++) {
+          var x = 0;
+          for (var r = 0; r < span; r++) {
+            if (!isFinite(pf.L[r])) continue;
+            var f = frontier[b + r];
+            var need = (f > 0 ? f + gap : 0) - pf.L[r];
+            if (need > x) x = need;
+          }
+          if (!best || x < best.x - 1e-6) best = { x: x, b: b, rot: rot, pf: pf, span: span };
+        }
+      });
+      if (best.pf.rows > nRows) warnings.push(L('nest.oversize', { piece: pieceLabel(src.pieces[u.id]), width: fmtLenU(H, unitMm) }));
+      for (var r = 0; r < best.span; r++) {
+        if (!isFinite(best.pf.R[r])) continue;
+        var nr = best.b + r;
+        frontier[nr] = Math.max(frontier[nr], best.x + best.pf.R[r]);
+      }
+      // Dünya dönüşümü: (çevir) → yerel (min 0,0) → yerleşim
+      var dx = best.x - best.pf.minX, dy = best.b * rowU - best.pf.minY;
+      var tf = best.rot
+        ? function (x, y) { return [2 * cx - x + dx, 2 * cy - y + dy]; }
+        : function (x, y) { return [x + dx, y + dy]; };
+      return { u: u, tf: tf, rot: best.rot, x: best.x, y: best.b * rowU };
+    });
+
+    // Kesim sırası: soldan sağa, aşağıdan yukarı
+    placed.sort(function (a, b) { return a.x - b.x || a.y - b.y; });
+
+    var nd = {
+      format: src.format, nested: true, segments: [], pieces: {}, pieceOrder: [], info: Object.assign({}, src.info),
+      bounds: null, message: '', unitMm: unitMm, warnings: [], errors: [], ended: true, labels: [], tools: {}, header: src.header || []
+    };
+    var px = 0, py = 0, used = 0, area = 0;
+    placed.forEach(function (pl) {
+      area += pl.u.area;
+      var members = {};
+      pl.u.members.forEach(function (id) {
+        members[id] = 1;
+        var p = src.pieces[id];
+        nd.pieces[id] = { id: id, num: p.num, code: p.code, tool: p.tool, attrs: p.attrs, color: p.color, closed: p.closed,
+          minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, cutLen: 0, firstSeg: -1, lastSeg: -1 };
+        nd.pieceOrder.push(id);
+        if (p.tool) nd.tools[p.tool] = (nd.tools[p.tool] || 0) + 1;
+      });
+      for (var i = 0; i < src.segments.length; i++) {
+        var sg = src.segments[i];
+        if (!members[sg.piece] || sg.type === 'move') continue;
+        var a = pl.tf(sg.x0, sg.y0), b = pl.tf(sg.x1, sg.y1);
+        if (Math.abs(a[0] - px) > 1e-6 || Math.abs(a[1] - py) > 1e-6) {
+          nd.segments.push({ x0: px, y0: py, x1: a[0], y1: a[1], len: Math.hypot(a[0] - px, a[1] - py), type: 'move', piece: sg.piece, tool: sg.tool });
+        }
+        nd.segments.push({ x0: a[0], y0: a[1], x1: b[0], y1: b[1], len: sg.len, type: sg.type, piece: sg.piece, tool: sg.tool });
+        var np = nd.pieces[sg.piece];
+        np.minX = Math.min(np.minX, a[0], b[0]); np.maxX = Math.max(np.maxX, a[0], b[0]);
+        np.minY = Math.min(np.minY, a[1], b[1]); np.maxY = Math.max(np.maxY, a[1], b[1]);
+        if (sg.type === 'cut') np.cutLen += sg.len;
+        if (np.firstSeg < 0) np.firstSeg = nd.segments.length - 1;
+        np.lastSeg = nd.segments.length - 1;
+        used = Math.max(used, a[0], b[0]);
+        px = b[0]; py = b[1];
+      }
+      pl.u.labels.forEach(function (li) {
+        var l = src.labels[li], q = pl.tf(l.x, l.y);
+        nd.labels.push({ x: q[0], y: q[1], text: l.text, h: l.h, lo: l.lo, tool: l.tool, ang: l.ang + (pl.rot ? Math.PI : 0) });
+      });
+    });
+    var margin = 20 / unitMm;
+    nd.bounds = { w: used + margin, h: H };
+    nd.nestStats = { count: placed.length, len: used, util: used > 0 ? area / (used * H) * 100 : 0, ms: performance.now() - t0 };
+    nd.warnings = warnings;
+    return nd;
+  }
+  function fmtLenU(units, unitMm) {
+    var cm = units * unitMm / 10;
+    return cm >= 100 ? num(cm / 100, 2) + ' m' : num(cm, 1) + ' cm';
+  }
+
+  function buildNestList() {
+    els.nestList.innerHTML = '';
+    els.btnPieces.disabled = !source;
+    updateNestCount();
+    if (!source) { els.nestPanel.hidden = true; return; }
+    unitsOf(source).forEach(function (u) {
+      var lab = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = u.id; cb.checked = !!nestSel[u.id];
+      cb.addEventListener('change', function () { if (cb.checked) nestSel[u.id] = true; else delete nestSel[u.id]; scheduleNest(); });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(pieceLabel(source.pieces[u.id])));
+      els.nestList.appendChild(lab);
+    });
+  }
+  function updateNestCount() {
+    var n = Object.keys(nestSel).length;
+    els.nestCount.textContent = n ? '(' + n + ')' : '';
+  }
+  var nestTimer = null;
+  function scheduleNest() {
+    updateNestCount();
+    clearTimeout(nestTimer);
+    nestTimer = setTimeout(applyNest, 250);
+  }
+  function applyNest() {
+    if (!source) return;
+    var ids = unitsOf(source).map(function (u) { return u.id; }).filter(function (id) { return nestSel[id]; });
+    sim.running = false;
+    if (ids.length >= 2) {
+      var nd = nestData(source, ids, els.nestRotate.checked);
+      nd.warnings.forEach(function (w) { log('warn', w); });
+      showData(nd);
+      log('ok', L('nest.done', { n: nd.nestStats.count, len: fmtLen(nd.nestStats.len), width: fmtLen(nd.bounds.h),
+        util: num(nd.nestStats.util, 1), ms: Math.round(nd.nestStats.ms) }));
+    } else {
+      var wasNested = data && data.nested;
+      if (wasNested || ids.length === 1) showData(source);
+      if (ids.length === 1) {
+        els.startPiece.value = String(ids[0]); els.onlyPiece.checked = true;
+        log('info', L('nest.single', { piece: pieceLabel(source.pieces[ids[0]]) }));
+        onRangeChange();
+      } else if (wasNested) log('info', L('nest.back'));
+    }
+  }
+  els.btnPieces.addEventListener('click', function (e) {
+    e.stopPropagation();
+    els.nestPanel.hidden = !els.nestPanel.hidden;
+  });
+  els.nestPanel.addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', function () { els.nestPanel.hidden = true; });
+  els.nestAll.addEventListener('click', function () {
+    if (!source) return;
+    unitsOf(source).forEach(function (u) { nestSel[u.id] = true; });
+    buildNestList(); scheduleNest();
+  });
+  els.nestNone.addEventListener('click', function () { nestSel = {}; buildNestList(); scheduleNest(); });
+  els.nestRotate.addEventListener('change', function () { if (Object.keys(nestSel).length >= 2) scheduleNest(); });
+
+  // ------------------------------------------------------------------
   // Dil değiştirme
   // ------------------------------------------------------------------
   function applyLang() {
@@ -1837,7 +2437,7 @@
       b.classList.toggle('active', b.getAttribute('data-lang') === lang);
       b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
     });
-    renderMarkerInfo(); fillPieceSelect(); buildToolList();
+    renderMarkerInfo(); fillPieceSelect(); buildToolList(); buildNestList();
     updateButtons(); updateStatus(); updateLogCounts();
     renderPreview(true); renderSim();
   }
@@ -1885,7 +2485,7 @@
         .map(function (r) { return r.textContent; });
       body += '\n### ' + L('fb.h.diag') + '\n\n' +
         '- ' + L('fb.k.file') + ': ' + (data ? els.fileName.textContent : '—') + '\n' +
-        '- ' + L('fb.k.format') + ': ' + (data ? (data.format === 'plt' ? 'HPGL (PLT)' : 'Gerber (CUT)') : '—') + '\n' +
+        '- ' + L('fb.k.format') + ': ' + (data ? ({ plt: 'HPGL (PLT)', dxf: 'DXF', cut: 'Gerber (CUT)' }[data.format] + (data.nested ? ' + nesting' : '')) : '—') + '\n' +
         '- ' + L('fb.k.lang') + ': ' + lang + '\n' +
         '- ' + L('fb.k.browser') + ': ' + navigator.userAgent + '\n' +
         '- ' + L('fb.k.page') + ': ' + location.href.split('#')[0].split('?')[0] + '\n' +
@@ -1904,8 +2504,8 @@
   log('info', L('ready'));
 
   // Test ve konsol kullanımı için
-  window.CutSim = { parseCut: parseCut, parsePlt: parsePlt, feedbackUrl: feedbackUrl, load: function (text, name) {
-    var res = isPlt(text, name) ? parsePlt(text) : parseCut(text);
+  window.CutSim = { parseCut: parseCut, parsePlt: parsePlt, parseDxf: parseDxf, nestData: nestData, feedbackUrl: feedbackUrl, load: function (text, name) {
+    var res = isDxf(text, name) ? parseDxf(text) : isPlt(text, name) ? parsePlt(text) : parseCut(text);
     res.warnings.forEach(function (w) { log('warn', w); });
     if (res.errors.length) { res.errors.forEach(function (e) { log('error', e); }); setData(null); return res; }
     els.fileName.textContent = name || 'test';
