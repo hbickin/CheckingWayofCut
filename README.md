@@ -58,6 +58,15 @@ demet bilgisi olarak okunur. `T001…` katmanları araç numarasına (T1…) eş
 
 CUT, PLT ve DXF dosyalarının hepsinde çalışır.
 
+## Birden çok dosya açma
+
+**📂 Dosya Seç** penceresinde birden çok dosya seçilebilir (Ctrl / Shift ile):
+
+- Seçimde **pastal** varsa (CUT dosyası, çerçeveli DXF ya da birden çok parçalı dosya) yalnızca pastal gösterilir;
+  birden çok pastal seçildiyse listedeki **en sondaki** açılır, diğerleri İşlemler alanında "atlandı" olarak yazılır.
+- Yalnızca **tek parçalık** dosyalar (ör. her biri bir kalıp olan PLT dosyaları) seçildiyse hepsi birleştirilir,
+  tüm parçalar seçili hale gelir ve 150 cm kumaş eninde nesting yapılır.
+
 ## Dil / Language
 
 Sağ üstteki **TR | EN** düğmeleriyle arayüz Türkçe ya da İngilizce olur; seçim tarayıcıda hatırlanır.
