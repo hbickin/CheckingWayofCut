@@ -1810,7 +1810,11 @@
 
   // Boşluk: başlat / duraklat
   document.addEventListener('keydown', function (e) {
-    if (e.code !== 'Space' || e.target.tagName === 'INPUT') return;
+    if (e.code !== 'Space') return;
+    // Yazı alanlarında, düğme/listelerde ve açık bir pencere (geri bildirim) varken boşluk normal çalışsın
+    var tag = e.target.tagName;
+    if (/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(tag) || e.target.isContentEditable) return;
+    if (els.fbDialog.open) return;
     e.preventDefault();
     if (sim.running) pauseSim(); else if (data) startSim();
   });
