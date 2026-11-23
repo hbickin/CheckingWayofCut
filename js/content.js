@@ -1,5 +1,10 @@
 /* BIÇKIN — versiyon geçmişi ve kullanım kılavuzu içeriği. Telif © 2026 Hüseyin BIÇKIN. */
   window.BK_VERSIONS = [
+    { v: '1.12', date: '2026-11-23',
+      tr: ['Delme (drill) noktası ikonu değişti: ince koyu <b>artı işareti</b> ve ortada <b>yeşil nokta</b>.',
+           'Simülasyonda bıçak delme noktasına ulaşınca yeşil noktanın çevresine koyu halka eklenir (delindi).'],
+      en: ['New drill point icon: a thin dark <b>crosshair</b> with a <b>green dot</b> in the centre.',
+           'During simulation a dark ring appears around the green dot once the knife has reached the drill point.'] },
     { v: '1.11', date: '2026-11-23',
       tr: ['CUT dosyalarındaki <b>delme (drill) noktaları</b> (<code>M43</code>) okunuyor ve pastalda sarı halkayla gösteriliyor; artık "bilinmeyen M43" uyarısı çıkmıyor.',
            'Simülasyonda bıçak delme noktasına ulaşınca halkanın ortası koyulaşır (delindi).'],
@@ -89,7 +94,7 @@ window.BK_GUIDE_IMG = 'assets/guide.jpg';
         10: ['Pastalın tam resmi', 'Pastalın tamamı küçük ölçekte. Kırmızı çerçeve, aşağıdaki büyük alanda o an gördüğünüz bölgedir; bir yere tıklarsanız büyük alan oraya gider.'],
         11: ['Simülasyon durumu', 'Bıçak aşağıda mı (kesiyor) yukarıda mı, bıçağın X/Y konumu (cm), kesilen parça, geçen ve toplam süre, ilerleme çubuğu ve yüzdesi.'],
         12: ['Yön ve görünüm ayarları', 'Yeşil &gt; saat yönü, mor &lt; saat yönü tersi, kara nokta kesimin başladığı yer. "Yön ikonları" bu işaretleri açar/kapatır; "Bıçağı takip et" görünümü bıçakla birlikte kaydırır; "Sığdır" görünümü ekrana sığdırır.'],
-        13: ['Simülasyon alanı', 'Bıçağın hareketini burada izlersiniz. Mavi çizgi kesilen yer, turuncu çentik, yeşil kesik çizgi bıçak kalkıkken yapılan boş hareket, sarı halka delme (drill) noktası. Fare tekerleği yakınlaştırır, sürükleyerek kaydırırsınız, çift tık sığdırır.'],
+        13: ['Simülasyon alanı', 'Bıçağın hareketini burada izlersiniz. Mavi çizgi kesilen yer, turuncu çentik, yeşil kesik çizgi bıçak kalkıkken yapılan boş hareket, yeşil noktalı artı işareti delme (drill) noktası. Fare tekerleği yakınlaştırır, sürükleyerek kaydırırsınız, çift tık sığdırır.'],
         14: ['İşlemler', 'Programın yaptığı her şey burada yazar: dosya bilgileri, parça geçişleri, uyarılar (sarı) ve hatalar (kırmızı). Bir sorun olursa ilk buraya bakın. "Temizle" listeyi siler.']
       },
       tipsTitle: 'Küçük ipuçları',
@@ -117,7 +122,7 @@ window.BK_GUIDE_IMG = 'assets/guide.jpg';
         10: ['Whole marker picture', 'The entire marker at a small scale. The red frame is the area you currently see in the large view below; click anywhere to move the large view there.'],
         11: ['Simulation status', 'Whether the knife is down (cutting) or up, its X/Y position (cm), the piece being cut, elapsed and total time, the progress bar and percentage.'],
         12: ['Direction and view settings', 'Green &gt; clockwise, purple &lt; counter-clockwise, the black dot is where cutting starts. "Direction icons" shows/hides these marks; "Follow knife" pans the view with the knife; "Fit" fits the view to the screen.'],
-        13: ['Simulation area', 'Watch the knife move here. Blue is the cut line, orange a notch, the green dashed line an idle move with the knife up, a yellow ring a drill point. The mouse wheel zooms, dragging pans, double-click fits.'],
+        13: ['Simulation area', 'Watch the knife move here. Blue is the cut line, orange a notch, the green dashed line an idle move with the knife up, a crosshair with a green dot a drill point. The mouse wheel zooms, dragging pans, double-click fits.'],
         14: ['Activity', 'Everything the program does is written here: file details, piece changes, warnings (yellow) and errors (red). If something is wrong, look here first. "Clear" empties the list.']
       },
       tipsTitle: 'Handy tips',

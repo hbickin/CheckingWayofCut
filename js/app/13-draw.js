@@ -61,22 +61,28 @@
     ctx.strokeStyle = COLORS.ghost; ctx.stroke(paths.ghost); ctx.stroke(paths.notch);
   }
 
-  // Delme (drill, M43) noktaları: ekranda sabit boyutlu sarı halka (dünya dönüşümü altında çağrılır).
-  // Simülasyonda bıçağın ulaştığı (delinmiş) noktaların ortası koyulaşır.
+  // Delme (drill, M43) noktaları: ince koyu artı (merkezi boş dört kısa çizgi) ve ortada yeşil nokta;
+  // ekranda sabit boyutlu (dünya dönüşümü altında çağrılır). Bıçak ulaştığında (delindi) noktaya koyu halka eklenir.
   function drawDrills(ctx, s, minPx) {
     var list = data && data.drills;
     if (!list || !list.length) return;
-    var r = Math.max(minPx, Math.min(7, s * 25)) / s;
-    var pending = new Path2D(), drilled = new Path2D();
+    var R = Math.max(minPx * 1.6, Math.min(11, s * 40)) / s;   // artı kolunun dış ucu
+    var g = R * 0.4, dot = R * 0.3;                              // merkez boşluğu, nokta yarıçapı
+    var cross = new Path2D(), dots = new Path2D(), drilled = new Path2D();
     list.forEach(function (dr) {
-      pending.moveTo(dr.x + r, dr.y); pending.arc(dr.x, dr.y, r, 0, Math.PI * 2);
+      var x = dr.x, y = dr.y;
+      cross.moveTo(x - R, y); cross.lineTo(x - g, y); cross.moveTo(x + g, y); cross.lineTo(x + R, y);
+      cross.moveTo(x, y - R); cross.lineTo(x, y - g); cross.moveTo(x, y + g); cross.lineTo(x, y + R);
+      dots.moveTo(x + dot, y); dots.arc(x, y, dot, 0, Math.PI * 2);
       if (sim.started && dr.seg >= sim.start && dr.seg < sim.idx) {
-        drilled.moveTo(dr.x + r * 0.45, dr.y); drilled.arc(dr.x, dr.y, r * 0.45, 0, Math.PI * 2);
+        drilled.moveTo(x + dot * 1.6, y); drilled.arc(x, y, dot * 1.6, 0, Math.PI * 2);
       }
     });
-    ctx.fillStyle = COLORS.drill; ctx.fill(pending);
-    ctx.lineWidth = 1.5 / s; ctx.strokeStyle = COLORS.drillEdge; ctx.stroke(pending);
-    ctx.fillStyle = COLORS.drillDone; ctx.fill(drilled);
+    ctx.lineCap = 'butt';
+    ctx.lineWidth = 1.4 / s; ctx.strokeStyle = COLORS.drillEdge; ctx.stroke(cross);
+    ctx.fillStyle = COLORS.drill; ctx.fill(dots);
+    ctx.lineWidth = 1.2 / s; ctx.strokeStyle = COLORS.drillDone; ctx.stroke(drilled);
+    ctx.lineCap = 'round';
   }
 
   // DXF parça yazıları ekranda okunabilir boyuttaysa (≥ 5 px) dosyanın kendi yazıları gösterilir
