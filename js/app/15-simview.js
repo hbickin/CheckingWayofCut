@@ -67,6 +67,13 @@
 
     if (els.showDir.checked) drawDirections(ctx, d, s, ox, oy);
 
+    // Delme noktaları etiket ve yön ikonlarının üstünde
+    if (data.drills && data.drills.length) {
+      worldTransform(ctx, d.dpr, s, ox, oy);
+      drawDrills(ctx, s, 4);
+      ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
+    }
+
     // Bıçak
     if (k && active) {
       var kx = ox + k.x * s, ky = oy - k.y * s;

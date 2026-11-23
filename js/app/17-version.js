@@ -2,7 +2,7 @@
   // ------------------------------------------------------------------
   // Versiyon geçmişi
   // ------------------------------------------------------------------
-  var APP_VERSION = '1.10';
+  var APP_VERSION = '1.11';
   var VERSIONS = window.BK_VERSIONS;
   function renderVersions() {
     els.btnVersion.textContent = 'ⓘ ' + L('ver.btn', { v: APP_VERSION });

@@ -17,7 +17,7 @@
       var poly = [];
       for (var i = p.firstSeg; i <= p.lastSeg; i++) {
         var sg = src.segments[i];
-        if (sg.piece !== p.id || sg.type !== 'cut') continue;
+        if (sg.piece !== p.id || sg.type !== 'cut' || sg.inner) continue;
         if (!poly.length) poly.push([sg.x0, sg.y0]);
         poly.push([sg.x1, sg.y1]);
       }
@@ -131,7 +131,7 @@
 
     var nd = {
       format: src.format, nested: true, segments: [], pieces: {}, pieceOrder: [], info: Object.assign({}, src.info),
-      bounds: null, message: '', unitMm: unitMm, warnings: [], errors: [], ended: true, labels: [], tools: {}, header: src.header || []
+      bounds: null, message: '', unitMm: unitMm, warnings: [], errors: [], ended: true, labels: [], drills: [], tools: {}, header: src.header || []
     };
     var px = 0, py = 0, used = 0, area = 0;
     placed.forEach(function (pl) {
@@ -145,9 +145,12 @@
         nd.pieceOrder.push(id);
         if (p.tool) nd.tools[p.tool] = (nd.tools[p.tool] || 0) + 1;
       });
+      var segMap = {};
       for (var i = 0; i < src.segments.length; i++) {
         var sg = src.segments[i];
-        if (!members[sg.piece] || sg.type === 'move') continue;
+        if (!members[sg.piece]) continue;
+        segMap[i] = nd.segments.length - 1;
+        if (sg.type === 'move') continue;
         var a = pl.tf(sg.x0, sg.y0), b = pl.tf(sg.x1, sg.y1);
         if (Math.abs(a[0] - px) > 1e-6 || Math.abs(a[1] - py) > 1e-6) {
           nd.segments.push({ x0: px, y0: py, x1: a[0], y1: a[1], len: Math.hypot(a[0] - px, a[1] - py), type: 'move', piece: sg.piece, tool: sg.tool });
@@ -161,7 +164,13 @@
         np.lastSeg = nd.segments.length - 1;
         used = Math.max(used, a[0], b[0]);
         px = b[0]; py = b[1];
+        segMap[i] = nd.segments.length - 1;
       }
+      (src.drills || []).forEach(function (dr) {
+        if (!members[dr.piece]) return;
+        var q = pl.tf(dr.x, dr.y);
+        nd.drills.push({ x: q[0], y: q[1], piece: dr.piece, seg: dr.seg in segMap ? segMap[dr.seg] : nd.segments.length - 1 });
+      });
       pl.u.labels.forEach(function (li) {
         var l = src.labels[li], q = pl.tf(l.x, l.y);
         nd.labels.push({ x: q[0], y: q[1], text: l.text, h: l.h, lo: l.lo, tool: l.tool, ang: l.ang + (pl.rot ? Math.PI : 0) });

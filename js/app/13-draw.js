@@ -61,6 +61,24 @@
     ctx.strokeStyle = COLORS.ghost; ctx.stroke(paths.ghost); ctx.stroke(paths.notch);
   }
 
+  // Delme (drill, M43) noktaları: ekranda sabit boyutlu sarı halka (dünya dönüşümü altında çağrılır).
+  // Simülasyonda bıçağın ulaştığı (delinmiş) noktaların ortası koyulaşır.
+  function drawDrills(ctx, s, minPx) {
+    var list = data && data.drills;
+    if (!list || !list.length) return;
+    var r = Math.max(minPx, Math.min(7, s * 25)) / s;
+    var pending = new Path2D(), drilled = new Path2D();
+    list.forEach(function (dr) {
+      pending.moveTo(dr.x + r, dr.y); pending.arc(dr.x, dr.y, r, 0, Math.PI * 2);
+      if (sim.started && dr.seg >= sim.start && dr.seg < sim.idx) {
+        drilled.moveTo(dr.x + r * 0.45, dr.y); drilled.arc(dr.x, dr.y, r * 0.45, 0, Math.PI * 2);
+      }
+    });
+    ctx.fillStyle = COLORS.drill; ctx.fill(pending);
+    ctx.lineWidth = 1.5 / s; ctx.strokeStyle = COLORS.drillEdge; ctx.stroke(pending);
+    ctx.fillStyle = COLORS.drillDone; ctx.fill(drilled);
+  }
+
   // DXF parça yazıları ekranda okunabilir boyuttaysa (≥ 5 px) dosyanın kendi yazıları gösterilir
   function dxfTextVisible(s) {
     var l = data.labels && data.labels[0];

@@ -63,7 +63,32 @@
     return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
   }
 
+  // CUT: parçanın kesimlerini kesintisiz zincirlere ayırır; ana kontur kapalı zincirdir
+  // (kapalı zincir yoksa en uzunu). Diğer zincirler iç çizgidir (ör. delme noktasının
+  // yanındaki boy/grain çizgisi) ve dolguya, yön hesabına katılmaz. Çentiğe gidip aynı
+  // noktaya dönen hareketler zinciri bozmaz.
+  function markInnerCuts() {
+    var chains = {}, eq = function (ax, ay, bx, by) { return Math.abs(ax - bx) < 1e-6 && Math.abs(ay - by) < 1e-6; };
+    data.segments.forEach(function (s) {
+      if (s.type !== 'cut') return;
+      var list = chains[s.piece] || (chains[s.piece] = []), c = list[list.length - 1];
+      if (!c || !eq(c.x, c.y, s.x0, s.y0)) list.push(c = { sx: s.x0, sy: s.y0, segs: [], len: 0 });
+      c.segs.push(s); c.len += s.len; c.x = s.x1; c.y = s.y1;
+    });
+    Object.keys(chains).forEach(function (id) {
+      var list = chains[id];
+      if (list.length < 2) return;
+      var main = null;
+      list.forEach(function (c) {
+        var closed = eq(c.x, c.y, c.sx, c.sy);
+        if (!main || (closed && !main.closed) || (closed === main.closed && c.len > main.c.len)) main = { c: c, closed: closed };
+      });
+      list.forEach(function (c) { if (c !== main.c) c.segs.forEach(function (s) { s.inner = true; }); });
+    });
+  }
+
   function buildPaths() {
+    if (data.format === 'cut') markInnerCuts();
     paths = { ghost: new Path2D(), notch: new Path2D(), fills: {}, tools: {} };
     var lastPiece = null, poly = null;
     var plt = toolFmt();
@@ -80,8 +105,9 @@
       }
       var target = s.type === 'notch' ? paths.notch : paths.ghost;
       target.moveTo(s.x0, s.y0); target.lineTo(s.x1, s.y1);
-      // Parça dolgusu: çentik uçlarını atlayıp kontur noktalarını tek çokgende birleştir
-      if (s.type === 'notch') return;
+      // Parça dolgusu: çentik uçlarını atlayıp kontur noktalarını tek çokgende birleştir.
+      // Konturdan kopuk iç çizgiler (ör. delme noktasından sonraki boy/grain çizgisi) dolguya katılmaz.
+      if (s.type === 'notch' || s.inner) return;
       if (s.piece !== lastPiece) { poly = paths.fills[s.piece] = new Path2D(); lastPiece = s.piece; poly.moveTo(s.x0, s.y0); }
       poly.lineTo(s.x1, s.y1);
     });
@@ -94,7 +120,7 @@
     var step = ARROW_STEP_MM / data.unitMm;
     var acc = {};
     data.segments.forEach(function (s) {
-      if (s.type !== 'cut') return;
+      if (s.type !== 'cut' || s.inner) return;
       var p = data.pieces[s.piece];
       if (!p) return;
       var a = acc[s.piece];
