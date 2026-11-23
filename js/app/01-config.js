@@ -12,7 +12,7 @@
     current: 'rgba(59,130,246,.22)', label: '#3d3a33',
     knifeDown: '#ef4444', knifeUp: '#22c55e', viewport: '#ef4444',
     dirCw: '#15803d', dirCcw: '#9333ea', dirOpen: '#64748b', start: '#000000',
-    drill: '#facc15', drillEdge: '#1e3a8a', drillDone: '#1e3a8a'
+    drill: '#22e04a', drillEdge: '#1f2937', drillDone: '#1f2937'
   };
   // HPGL plotter birimi: 0,025 mm (1/40 mm)
   var PLT_UNIT_MM = 0.025;

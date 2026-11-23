@@ -119,7 +119,7 @@ olarak açılır; gönderen kişi orada **Create** ile kaydı oluşturur (GitHub
 | `X<x>Y<y>` | Konuma git (birim 0,01 inç = 0,254 mm) |
 | `M14` / `M15` | Bıçak aşağı / yukarı |
 | `M19` | Sonraki hareket çentik (notch) kesimi |
-| `X<x>Y<y>M43` | Delme (drill) noktası: bıçak kalkıkken bu konuma gidilip delik açılır; sarı halkayla gösterilir |
+| `X<x>Y<y>M43` | Delme (drill) noktası: bıçak kalkıkken bu konuma gidilip delik açılır; yeşil noktalı artı işaretiyle gösterilir |
 | `M20` | Sonraki alan mesaj (`/L=..CM/W=..CM` boy/en kontrolünde kullanılır) |
 | `M26 M70 M80–M85`, `D2` | Tanınır, çizime etkisi yoktur |
 | `Q X<x>Y<y>` | Pastal ilerleme/son konumu |
