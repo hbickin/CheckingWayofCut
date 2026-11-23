@@ -1,7 +1,7 @@
 /* BIÇKIN — Gerber .CUT okuyucu / CUT reader. Telif © 2026 Hüseyin BIÇKIN. */
   function parseCut(text) {
     var res = {
-      format: 'cut', segments: [], pieces: {}, pieceOrder: [], info: {}, bounds: null, message: '',
+      format: 'cut', segments: [], pieces: {}, pieceOrder: [], drills: [], info: {}, bounds: null, message: '',
       unitMm: DEFAULT_UNIT_MM, feed: null, warnings: [], errors: [], ended: false
     };
     var warnOnce = {};
@@ -35,6 +35,12 @@
     var first = true;
     var tokRe = /([A-Z])(-?\d+(?:\.\d+)?)?/y;
 
+    // M43: delme (drill) noktası — bıçak kalkıkken gidilen konumda delik açılır.
+    // seg: o noktaya varış hareketinin indeksi (simülasyonda "delindi" durumu için)
+    function addDrill(dx, dy) {
+      res.drills.push({ x: dx, y: dy, piece: piece, seg: res.segments.length - 1 });
+    }
+
     for (var i = 0; i < tokens.length; i++) {
       var tok = tokens[i].trim();
       if (!tok) continue;
@@ -59,7 +65,7 @@
         if (fields[0].c !== 'H') res.warnings.push(L('p.noH'));
       }
 
-      var nx = null, ny = null, isFeed = false;
+      var nx = null, ny = null, isFeed = false, drill = false;
       for (var f = 0; f < fields.length; f++) {
         var c = fields[f].c, v = fields[f].v;
         switch (c) {
@@ -83,6 +89,7 @@
             else if (v === 15) down = false;
             else if (v === 19) notchNext = true;
             else if (v === 20) expectMessage = true;
+            else if (v === 43) drill = true;
             else if (!M_INFO[v]) warn('M' + v, L('p.unknownM', { n: v }));
             break;
           default:
@@ -90,7 +97,10 @@
         }
       }
 
-      if (nx === null && ny === null) continue;
+      if (nx === null && ny === null) {
+        if (drill) addDrill(x, y);
+        continue;
+      }
       if (nx === null) nx = x;
       if (ny === null) ny = y;
       if (!isFinite(nx) || !isFinite(ny)) { warn('nan', L('p.badCoord')); continue; }
@@ -112,6 +122,7 @@
       }
       if (nx < 0 || ny < 0) warn('neg', L('p.neg'));
       x = nx; y = ny; notchNext = false;
+      if (drill) addDrill(x, y);
     }
     if (expectMessage) res.warnings.push(L('p.m20'));
     if (down) res.warnings.push(L('p.knifeDown'));

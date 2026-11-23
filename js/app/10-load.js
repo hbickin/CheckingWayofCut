@@ -88,7 +88,7 @@
     var fmt = items.every(function (it) { return it.res.format === items[0].res.format; }) ? items[0].res.format : 'dxf';
     var m = {
       format: fmt, segments: [], pieces: {}, pieceOrder: [], info: { 'Marker Name': L('l.multiName', { n: items.length }) },
-      bounds: null, message: '', unitMm: unitMm, feed: null, warnings: [], errors: [], ended: true, labels: [], tools: {}, header: []
+      bounds: null, message: '', unitMm: unitMm, feed: null, warnings: [], errors: [], ended: true, labels: [], drills: [], tools: {}, header: []
     };
     var offX = 0, maxH = 0, px = 0, py = 0, gap = 20 / unitMm;
     items.forEach(function (it, k) {
@@ -104,7 +104,9 @@
         m.pieceOrder.push(base + id);
         if (p.tool) m.tools[p.tool] = (m.tools[p.tool] || 0) + 1;
       });
-      r.segments.forEach(function (sg) {
+      var segMap = {};
+      r.segments.forEach(function (sg, si) {
+        segMap[si] = m.segments.length - 1;
         if (sg.type === 'move') return;
         var x0 = sg.x0 * f + offX, y0 = sg.y0 * f, x1 = sg.x1 * f + offX, y1 = sg.y1 * f, pid = base + sg.piece;
         if (Math.abs(x0 - px) > 1e-6 || Math.abs(y0 - py) > 1e-6) {
@@ -120,6 +122,10 @@
           np.lastSeg = m.segments.length - 1;
         }
         px = x1; py = y1;
+        segMap[si] = m.segments.length - 1;
+      });
+      (r.drills || []).forEach(function (dr) {
+        m.drills.push({ x: dr.x * f + offX, y: dr.y * f, piece: base + dr.piece, seg: dr.seg in segMap ? segMap[dr.seg] : m.segments.length - 1 });
       });
       (r.labels || []).forEach(function (l) {
         m.labels.push({ x: l.x * f + offX, y: l.y * f, text: l.text, h: l.h * f, lo: l.lo, tool: l.tool, ang: l.ang });
@@ -141,6 +147,7 @@
     });
     log('ok', L('l.loaded', { ms: Math.round(ms), pieces: res.pieceOrder.length, moves: res.segments.length, notches: notches }));
     log('info', L('l.lengths', { cut: fmtLen(cutLen), move: fmtLen(moveLen), time: fmtTime(totalTime), speed: speedMm() }));
+    if (res.drills && res.drills.length) log('info', L('l.drills', { n: res.drills.length }));
     if (res.message) log('info', L('l.message', { msg: res.message }));
     var cw = 0, ccw = 0;
     res.pieceOrder.forEach(function (id) { var d = res.pieces[id].dir; if (d === 'cw') cw++; else if (d === 'ccw') ccw++; });

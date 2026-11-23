@@ -23,6 +23,7 @@
     worldTransform(ctx, d.dpr, s, ox, oy);
     var k = knifePos();
     drawDone(ctx, s, 1.3, k);
+    drawDrills(ctx, s, 2.5);
 
     // Simülasyon penceresinin önizlemedeki karşılığı
     ctx.setTransform(d.dpr, 0, 0, d.dpr, 0, 0);
