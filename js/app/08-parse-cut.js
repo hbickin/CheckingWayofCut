@@ -12,12 +12,10 @@
 
     text = text.replace(/^﻿/, '');
     if (!text.trim()) { res.errors.push(L('p.empty')); return res; }
-    if (/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 2000))) {
-      res.errors.push(L('p.binaryCut'));
-      return res;
-    }
 
-    // Geometri akışı "M0*" ile biter, ardından virgüllü bilgi satırları gelir
+    // Geometri akışı "M0*" ile biter, ardından bilgi satırları gelir.
+    // Bazı Gerber sürümlerinde M0'dan sonraki etiket bloğu ikili (binary) veridir;
+    // bu yüzden "ikili dosya" kontrolü yalnızca geometri (M0 öncesi) kısmına uygulanır.
     var geom, trailer = '';
     var end = /\*M0+\*/.exec(text);
     if (end) {
@@ -28,6 +26,10 @@
       geom = tm ? text.slice(0, tm.index) : text;
       trailer = tm ? text.slice(tm.index) : '';
       res.warnings.push(L('p.noM0'));
+    }
+    if (/[\x00-\x08\x0E-\x1F]/.test(geom.slice(0, 4000))) {
+      res.errors.push(L('p.binaryCut'));
+      return res;
     }
 
     var tokens = geom.replace(/[\r\n]+/g, '').split('*');
