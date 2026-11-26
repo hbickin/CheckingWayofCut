@@ -1,5 +1,14 @@
 /* BIÇKIN — versiyon geçmişi ve kullanım kılavuzu içeriği. Telif © 2026 Hüseyin BIÇKIN. */
   window.BK_VERSIONS = [
+    { v: '1.13', date: '2026-11-26',
+      tr: ['M0 sonrası <b>ikili (binary) etiket bloğu</b> olan CUT dosyaları (bazı Gerber sürümleri) artık açılıyor; "ikili veri" hatası çözüldü.',
+           'GERBERcutter <b>hız komutları</b> işleniyor: <code>M25</code> ve <code>M60–M66</code> (ör. <code>M63</code>=%80) kesim hızını düşürür, <code>M26</code> ya da sonraki parça normale döndürür; simülasyon bu bölgeleri daha yavaş keser.',
+           'Tanınan diğer M kodları (<code>M1, M17, M18, M44, M46, M47, M68</code>) için artık "bilinmeyen kod" uyarısı çıkmıyor.',
+           'Dosya bağlantılarına <b>sürüm etiketi</b> (<code>?v=1.13</code>) eklendi; yeni sürüm yayınlanınca tarayıcı eski dosyaları önbellekten göstermez.'],
+      en: ['CUT files with a <b>binary label block</b> after M0 (some Gerber versions) now open; the "binary data" error is fixed.',
+           'GERBERcutter <b>velocity commands</b> are handled: <code>M25</code> and <code>M60–M66</code> (e.g. <code>M63</code>=80%) lower the cut speed, restored by <code>M26</code> or the next piece; the simulation cuts those zones slower.',
+           'Other recognized M-codes (<code>M1, M17, M18, M44, M46, M47, M68</code>) no longer raise an "unknown code" warning.',
+           'A <b>version tag</b> (<code>?v=1.13</code>) was added to file links so browsers reload new versions instead of serving stale cache.'] },
     { v: '1.12', date: '2026-11-23',
       tr: ['Delme (drill) noktası ikonu değişti: ince koyu <b>artı işareti</b> ve ortada <b>yeşil nokta</b>.',
            'Simülasyonda bıçak delme noktasına ulaşınca yeşil noktanın çevresine koyu halka eklenir (delindi).'],
@@ -72,7 +81,7 @@
   ];
   // Numaraların resim üzerindeki yeri (% olarak sol, üst); ekran görüntüsü alınırken ölçüldü
   window.BK_GUIDE_POS = {"1":[12.63,3.29],"2":[21.16,3.29],"3":[59.12,3.29],"4":[79.63,3.29],"5":[1.3,8.48],"6":[9.58,8.48],"7":[63.18,8.48],"8":[5.1,13.02],"9":[5.96,16.32],"10":[1.71,20.85],"11":[8.67,42.9],"12":[59.71,47.46],"13":[1.71,52.68],"14":[1.71,90.94]};
-window.BK_GUIDE_IMG = 'assets/guide.jpg';
+window.BK_GUIDE_IMG = 'assets/guide.jpg?v=1.13';
   window.BK_GUIDE = {
     tr: {
       intro: 'Merhaba! Bu sayfada ekranın her bölümünü bir öğretmen gibi sırayla anlatıyorum. Resimdeki turuncu numaraların üzerine gelin ya da tıklayın; aşağıda aynı numaranın açıklaması vurgulanır.',

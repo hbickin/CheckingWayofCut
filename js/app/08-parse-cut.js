@@ -33,7 +33,7 @@
     }
 
     var tokens = geom.replace(/[\r\n]+/g, '').split('*');
-    var x = 0, y = 0, down = false, piece = 0, notchNext = false, expectMessage = false, slow = false;
+    var x = 0, y = 0, down = false, piece = 0, notchNext = false, expectMessage = false, curVel = 1;
     var first = true;
     var tokRe = /([A-Z])(-?\d+(?:\.\d+)?)?/y;
 
@@ -78,7 +78,7 @@
           case 'D': break;
           case 'N':
             piece = v;
-            slow = false;                 // yeni parça numarası normal kesim hızına döndürür
+            curVel = 1;                   // yeni parça numarası normal kesim hızına döndürür
             if (!res.pieces[piece]) {
               res.pieces[piece] = { id: piece, minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, attrs: {}, cutLen: 0, firstSeg: -1, lastSeg: -1 };
               res.pieceOrder.push(piece);
@@ -92,9 +92,11 @@
             else if (v === 15) down = false;
             else if (v === 19) notchNext = true;
             else if (v === 20) expectMessage = true;
-            else if (v === 43) drill = true;
-            else if (v === 63 || v === 25) { slow = true; res.hasSlow = true; }   // %20 kesim hızı azaltma
-            else if (v === 26) slow = false;                                       // normal kesim hızı
+            else if (v === 43 || v === 44) drill = true;                            // delme / yardımcı delme
+            else if (v === 26) curVel = 1;                                          // normal kesim hızı
+            else if (CUT_VELOCITY[v] !== undefined) {                               // M25, M60–M66 hız komutları
+              curVel = CUT_VELOCITY[v]; if (curVel < 1) res.hasSlow = true;
+            }
             else if (!M_INFO[v]) warn('M' + v, L('p.unknownM', { n: v }));
             break;
           default:
@@ -115,7 +117,7 @@
       if (len > 0) {
         var type = down ? (notchNext ? 'notch' : 'cut') : 'move';
         var seg = { x0: x, y0: y, x1: nx, y1: ny, len: len, type: type, piece: piece };
-        if (type !== 'move' && slow) seg.vscale = SLOW_CUT_FACTOR;   // M63/M25 yavaş kesim bölgesi
+        if (type !== 'move' && curVel !== 1) seg.vscale = curVel;   // M25/M60–M66 hız komutu etkisi
         res.segments.push(seg);
         var p = res.pieces[piece];
         if (p && type !== 'move') {
