@@ -170,7 +170,13 @@
   }
 
   function parseTrailer(trailer, res) {
-    var vNames = {}, cur = null;
+    var vNames = {}, cur = null, missL = 0;
+    // Parça alanları numaraya göre eşlenir (dil bağımsız): 1=ad, 4=beden, 7=sol/sağ …
+    // Böylece Türkçe (PARÇA ADI) ya da İngilizce (PIECE NAME) alan adlı dosyalar aynı okunur.
+    var CUT_FIELD = {
+      '1': 'PIECE NAME', '2': 'PIECE DESCRIPTION', '3': 'PIECE CATEGORY', '4': 'PIECE SIZE',
+      '5': 'BUNDLE ID', '6': 'MODEL NAME', '7': 'LEFT/RIGHT', '8': 'MESSAGE', '9': 'BUNDLE GROUP'
+    };
     trailer.split(/\r?\n/).forEach(function (line) {
       line = line.trim().replace(/\*$/, '');
       if (!line) return;
@@ -186,14 +192,15 @@
         case 'L':
           var n = Number(p[1]);
           cur = res.pieces[n] || null;
-          if (n && !cur) res.warnings.push(L('p.noPieceForL', { n: n }));
+          if (n && !cur) missL++;
           break;
         case 'P': if (cur) cur.labelPos = { x: Number(p[1]), y: Number(p[2]) }; break;
         case 'D':
           if (!cur) break;
           if (p.length >= 6 && p[3] !== '' && !isNaN(p[3])) cur.color = [Number(p[3]), Number(p[4]), Number(p[5])];
-          cur.attrs[vNames[p[1]] || ('D' + p[1])] = p[2];
+          cur.attrs[CUT_FIELD[p[1]] || vNames[p[1]] || ('D' + p[1])] = p[2];
           break;
       }
     });
+    if (missL) res.warnings.push(L('p.noPieceForLn', { n: missL }));
   }

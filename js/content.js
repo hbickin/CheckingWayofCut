@@ -1,5 +1,12 @@
 /* BIÇKIN — versiyon geçmişi ve kullanım kılavuzu içeriği. Telif © 2026 Hüseyin BIÇKIN. */
   window.BK_VERSIONS = [
+    { v: '1.14', date: '2026-11-26',
+      tr: ['CUT dosyalarında parça bilgileri artık <b>alan adına değil alan numarasına</b> göre okunuyor; Türkçe alan adlı (PARÇA ADI, PARÇA BEDENİ, SOL/SAG) dosyalarda da <b>parça adı, bedeni ve sol/sağ</b> doğru görünüyor.',
+           'Parça adı yoksa parça yine <code>N1, N2 …</code> olarak gösterilir.',
+           'Geometride karşılığı olmayan etiket (L) satırları için tek bir özet uyarı verilir (eskiden her satır için ayrı ayrıydı).'],
+      en: ['CUT piece fields are now read <b>by field number instead of field name</b>; files with Turkish field labels (PARÇA ADI, PARÇA BEDENİ, SOL/SAG) also show the <b>piece name, size and left/right</b> correctly.',
+           'When a piece has no name it is still shown as <code>N1, N2 …</code>.',
+           'Label (L) lines with no matching geometry now raise a single summary warning instead of one per line.'] },
     { v: '1.13', date: '2026-11-26',
       tr: ['M0 sonrası <b>ikili (binary) etiket bloğu</b> olan CUT dosyaları (bazı Gerber sürümleri) artık açılıyor; "ikili veri" hatası çözüldü.',
            'GERBERcutter <b>hız komutları</b> işleniyor: <code>M25</code> ve <code>M60–M66</code> (ör. <code>M63</code>=%80) kesim hızını düşürür, <code>M26</code> ya da sonraki parça normale döndürür; simülasyon bu bölgeleri daha yavaş keser.',
@@ -81,7 +88,7 @@
   ];
   // Numaraların resim üzerindeki yeri (% olarak sol, üst); ekran görüntüsü alınırken ölçüldü
   window.BK_GUIDE_POS = {"1":[12.63,3.29],"2":[21.16,3.29],"3":[59.12,3.29],"4":[79.63,3.29],"5":[1.3,8.48],"6":[9.58,8.48],"7":[63.18,8.48],"8":[5.1,13.02],"9":[5.96,16.32],"10":[1.71,20.85],"11":[8.67,42.9],"12":[59.71,47.46],"13":[1.71,52.68],"14":[1.71,90.94]};
-window.BK_GUIDE_IMG = 'assets/guide.jpg?v=1.13';
+window.BK_GUIDE_IMG = 'assets/guide.jpg?v=1.14';
   window.BK_GUIDE = {
     tr: {
       intro: 'Merhaba! Bu sayfada ekranın her bölümünü bir öğretmen gibi sırayla anlatıyorum. Resimdeki turuncu numaraların üzerine gelin ya da tıklayın; aşağıda aynı numaranın açıklaması vurgulanır.',
