@@ -121,6 +121,7 @@ olarak açılır; gönderen kişi orada **Create** ile kaydı oluşturur (GitHub
 | `M19` | Sonraki hareket çentik (notch) kesimi |
 | `X<x>Y<y>M43` | Delme (drill) noktası: bıçak kalkıkken bu konuma gidilip delik açılır; yeşil noktalı artı işaretiyle gösterilir |
 | `M20` | Sonraki alan mesaj (`/L=..CM/W=..CM` boy/en kontrolünde kullanılır) |
+| `M25` / `M63` / `M26` | Kesim hızını %20 azalt / normale döndür (yavaş kesim; sonraki N ya da M26'da biter) |
 | `M26 M70 M80–M85`, `D2` | Tanınır, çizime etkisi yoktur |
 | `Q X<x>Y<y>` | Pastal ilerleme/son konumu |
 | `M0` | Program sonu |

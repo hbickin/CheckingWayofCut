@@ -147,6 +147,11 @@
     });
     log('ok', L('l.loaded', { ms: Math.round(ms), pieces: res.pieceOrder.length, moves: res.segments.length, notches: notches }));
     log('info', L('l.lengths', { cut: fmtLen(cutLen), move: fmtLen(moveLen), time: fmtTime(totalTime), speed: speedMm() }));
+    if (res.hasSlow) {
+      var slowLen = 0;
+      res.segments.forEach(function (s) { if (s.type !== 'move' && s.vscale) slowLen += s.len; });
+      log('info', L('l.slow', { len: fmtLen(slowLen) }));
+    }
     if (res.drills && res.drills.length) log('info', L('l.drills', { n: res.drills.length }));
     if (res.message) log('info', L('l.message', { msg: res.message }));
     var cw = 0, ccw = 0;

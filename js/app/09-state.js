@@ -30,7 +30,7 @@
 
   function segTime(seg, from) {
     var mm = (seg.len - (from || 0)) * data.unitMm;
-    return mm / (speedMm() * (seg.type === 'move' ? MOVE_SPEED_FACTOR : 1));
+    return mm / (speedMm() * (seg.type === 'move' ? MOVE_SPEED_FACTOR : (seg.vscale || 1)));
   }
   function computeTotalTime() {
     totalTime = 0;

@@ -4,6 +4,8 @@
   var DEFAULT_UNIT_MM = 0.254;
   // Bıçak kalkıkken boş hareket, kesim hızının bu katı ile yapılır
   var MOVE_SPEED_FACTOR = 2;
+  // M63/M25 (GERBERcutter): kesim hızı %20 azaltılır (0,80×), sonraki N ya da M26'da normale döner
+  var SLOW_CUT_FACTOR = 0.80;
 
   var COLORS = {
     fabric: '#f7f3ea', fabricEdge: '#b9b2a2', grid: 'rgba(0,0,0,.06)',
